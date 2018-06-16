@@ -5,6 +5,7 @@ import logging
 from pathlib import Path
 import os
 import discord
+import lotto_dao as db
 from discord.ext import commands
 
 
@@ -13,7 +14,6 @@ async def run():
     Where the bot gets started. If you wanted to create an database connection pool or other session for the bot to use,
     it's recommended that you create it here and pass it to the bot as a kwarg.
     """
-
     bot = Bot(description='It\'s the lottory! (It\'s not rigged)')
     token = os.getenv('LOTTO_BOT_TOKEN')
 
@@ -34,6 +34,7 @@ class Bot(commands.Bot):
 
         self.loop.create_task(self.track_start())
         self.loop.create_task(self.load_all_extensions())
+
 
     async def track_start(self):
         """
@@ -68,6 +69,7 @@ class Bot(commands.Bot):
                 error = f'{extension}\n {type(e).__name__} : {e}'
                 print(f'failed to load extension {error}')
             print('-' * 10)
+        self.loop.create_task(self.add_all_users())
 
     async def on_ready(self):
         """
@@ -81,19 +83,29 @@ class Bot(commands.Bot):
               f'Template Maker: SourSpoon / Spoon#7805')
         print('-' * 10)
 
+
+    async def add_all_users(self):
+        print("Add all users called")
+        db.initialize_tables()
+        for user in self.users:
+            db.add_user(user.id)
+
     async def on_message_edit(self, before, after):
            if after.author.bot:
                return
-           if after.content.find("rigged") != -1 and before.content.find("rigged") == -1:
+           after_lw = after.content.lower()
+           before_lw = before.content.lower()
+           if after_lw.find("rigged") != -1 and before_lw.find("rigged") == -1:
                channel = after.channel
-               await channel.send("I see what you did, it's not rigged ubitch")
+               await channel.send("I see what you did {}, it's not rigged ubitch".format(after.author.nick))
 
     async def on_message(self, message):
         channel = message.channel
-        print(message)
+        print(message.author, message.author.id, message.content)
         if message.author.bot:
             return
-        if message.content.find("rigged") != -1:
+        check_rigged = message.content.lower()
+        if check_rigged.find("rigged") != -1:
             await channel.send("It's not rigged bitch")
         await self.process_commands(message)
 
