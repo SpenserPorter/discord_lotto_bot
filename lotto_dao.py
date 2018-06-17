@@ -13,9 +13,9 @@ class LottoryConnection(object):
         self.connection.close()
 
 def initialize_tables():
-    table_data = {'user':{'user_id':'INTEGER PRIMARY KEY', 'balance':'REAL'},
+    table_data = {'user':{'user_id':'INTEGER PRIMARY KEY', 'balance':'REAL DEFAULT 0', 'income': 'INTEGER DEFAULT 0', 'outflow': 'INTEGER DEFAULT O'},
                   'ticket':{'ticket_id':'INTEGER PRIMARY KEY', 'ticket_value':'TEXT', 'lottory_id':'INTEGER', 'user_id':'INTEGER'},
-                  'lottory':{'lottory_id':'INTEGER PRIMARY KEY', 'jackpot':'INTEGER'},
+                  'lottory':{'lottory_id':'INTEGER PRIMARY KEY', 'jackpot':'INTEGER DEFAULT 0', 'income': 'INTEGER DEFAULT 0', 'outflow': 'INTEGER DEFAULT 0'},
                   }
     with LottoryConnection() as conn:
         curr = conn.cursor()
@@ -28,23 +28,48 @@ def initialize_tables():
             curr.execute(sql)
         conn.commit()
 
-def add_lottory(jackpot=None):
-    if jackpot is None:
-        raise ValueError("Must provide a jackpot seed value to initialize a new lottory")
-
+def add_lottory(jackpot=0):
     with LottoryConnection() as conn:
         curr = conn.cursor()
         sql = 'INSERT INTO lottory (jackpot) VALUES ({jp});'.format(jp=jackpot)
         curr.execute(sql)
         conn.commit()
 
-def get_lottory_jackpot(lottory_id):
+def get_lottory_jackpot_prog(lottory_id):
     with LottoryConnection() as conn:
         curr = conn.cursor()
         get_lottory = 'SELECT jackpot FROM lottory WHERE lottory_id = {id};'.format(id=lottory_id)
         curr.execute(get_lottory)
-        lottory_id = curr.fetchone()
-        return lottory_id
+        lottory_jackpot = curr.fetchone()
+        return lottory_jackpot[0]
+
+def modify_lottory_jackpot_prog(lottory_id, amount):
+    with LottoryConnection() as conn:
+        curr = conn.cursor()
+        get_balance_sql = 'SELECT jackpot FROM lottory WHERE lottory_id = {};'.format(lottory_id)
+        curr.execute(get_balance_sql)
+        current_balance = curr.fetchone()[0]
+        new_balance = current_balance + amount
+        set_balance_sql = 'REPLACE INTO lottory (lottory_id, jackpot) VALUES ({},{});'.format(lottory_id, new_balance)
+        curr.execute(set_balance_sql)
+        conn.commit()
+        return new_balance
+
+def update_lottory_stats(lottory_id, income, outflow):
+    with LottoryConnection() as conn:
+        curr = conn.cursor()
+        sql = 'REPLACE INTO lottory (lottory_id, income, outflow) VALUES ({ld},{ic},{of});'.format(ld=lottory_id, ic=income, of=outflow)
+        curr.execute(sql)
+        conn.commit()
+
+def get_lottory_stats(lottory_id=None):
+    with LottoryConnection() as conn:
+        curr = conn.cursor()
+        lottory_id_sql = '' if lottory_id is None else ' WHERE lottory_id={}'.format(lottory_id)
+        sql = 'SELECT income, outflow FROM lottory{};'.format(lottory_id_sql)
+        curr.execute(sql)
+        return curr.fetchall()
+
 
 def add_user(user_id):
     with LottoryConnection() as conn:
@@ -53,12 +78,40 @@ def add_user(user_id):
         curr.execute(add_user)
         conn.commit()
 
+def get_user(user_id=None):
+    with LottoryConnection() as conn:
+        curr = conn.cursor()
+        all_users = '' if user_id is None else 'WHERE user_id ={}'.format(user_id)
+        get_user_sql = 'SELECT user_id FROM user{};'.format(all_users)
+        curr.execute(get_user_sql)
+        return curr.fetchall()
+
+
 def add_ticket_to_user(ticket_value, lottory_id, user_id):
     with LottoryConnection() as conn:
         curr = conn.cursor()
         add_ticket_sql = 'INSERT INTO ticket (ticket_value, lottory_id, user_id) VALUES ("{tv}", {ld}, {id});'.format(tv=ticket_value, ld=lottory_id, id=user_id)
         curr.execute(add_ticket_sql)
         conn.commit()
+
+def get_user_balance(user_id):
+    with LottoryConnection() as conn:
+        curr = conn.cursor()
+        get_balance_sql = 'SELECT balance FROM user WHERE user_id = {};'.format(user_id)
+        curr.execute(get_balance_sql)
+        return curr.fetchone()[0]
+
+def modify_user_balance(user_id, amount):
+    with LottoryConnection() as conn:
+        curr = conn.cursor()
+        get_balance_sql = 'SELECT balance FROM user WHERE user_id = {};'.format(user_id)
+        curr.execute(get_balance_sql)
+        current_balance = curr.fetchone()[0]
+        new_balance = current_balance + amount
+        set_balance_sql = 'REPLACE INTO user (user_id, balance) VALUES ({},{});'.format(user_id, new_balance)
+        curr.execute(set_balance_sql)
+        conn.commit()
+        return new_balance
 
 def get_current_lottory():
     with LottoryConnection() as conn:
@@ -80,7 +133,7 @@ def get_user_tickets(user_id, lottory_id=None):
         ld_sql = ' AND lottory_id = {ld}'.format(ld=lottory_id) if lottory_id is not None else ''
         get_ticket_sql = 'SELECT ticket_value FROM ticket WHERE user_id = {id}{ld};'.format(id=user_id, ld=ld_sql)
         curr.execute(get_ticket_sql)
-        tickets = curr.fetchmany(100)
+        tickets = curr.fetchall(100)
         output = []
         for ticket in tickets:
             output.append(ticket[0])

@@ -85,7 +85,6 @@ class Bot(commands.Bot):
 
 
     async def add_all_users(self):
-        print("Add all users called")
         db.initialize_tables()
         for user in self.users:
             db.add_user(user.id)
