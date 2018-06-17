@@ -133,7 +133,7 @@ def get_user_tickets(user_id, lottory_id=None):
         ld_sql = ' AND lottory_id = {ld}'.format(ld=lottory_id) if lottory_id is not None else ''
         get_ticket_sql = 'SELECT ticket_value FROM ticket WHERE user_id = {id}{ld};'.format(id=user_id, ld=ld_sql)
         curr.execute(get_ticket_sql)
-        tickets = curr.fetchall(100)
+        tickets = curr.fetchall()
         output = []
         for ticket in tickets:
             output.append(ticket[0])
