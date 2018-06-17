@@ -87,11 +87,15 @@ def get_user(user_id=None):
         return curr.fetchall()
 
 
-def add_ticket_to_user(ticket_value, lottory_id, user_id):
+def add_ticket_to_user(ticket_list, lottory_id, user_id):
     with LottoryConnection() as conn:
-        curr = conn.cursor()
-        add_ticket_sql = 'INSERT INTO ticket (ticket_value, lottory_id, user_id) VALUES ("{tv}", {ld}, {id});'.format(tv=ticket_value, ld=lottory_id, id=user_id)
-        curr.execute(add_ticket_sql)
+        curr=conn.cursor()
+        curr.execute('BEGIN TRANSACTION')
+        for ticket in ticket_list:
+            ticket_value = ticket.numbers
+            curr = conn.cursor()
+            add_ticket_sql = 'INSERT INTO ticket (ticket_value, lottory_id, user_id) VALUES ("{tv}", {ld}, {id});'.format(tv=ticket_value, ld=lottory_id, id=user_id)
+            curr.execute(add_ticket_sql)
         conn.commit()
 
 def get_user_balance(user_id):

@@ -6,8 +6,8 @@ import asyncio
 from discord.ext import commands
 
 
-payout_table = {True:{0:0, 1:0, 2:10000, 3:200000, 4:25000000},
-                False:{0:0, 1:0, 2:0, 3:25000, 4:2000000}}
+payout_table = {True:{0:2000, 1:2000, 2:10000, 3:250000, 4:50000000},
+                False:{0:0, 1:0, 2:0, 3:20000, 4:2000000}}
 
 class Ticket(object):
 
@@ -93,6 +93,11 @@ class Lottory:
         await ctx.send("Lottory {} has begun, purchase tickets now!".format(lid))
 
     @lottory.command()
+    async def info(self, ctx):
+        ctx.send("4 White Balls 1-23, 1 MEGABALL 1-11")
+        ctx.send("Match 4+1 = ", payout_table[True][4], "+ progressive! \n")
+
+    @lottory.command()
     async def status(self,ctx):
         lid = db.get_current_lottory()
         tickets = db.get_lottory_tickets(lid)
@@ -106,7 +111,7 @@ class Lottory:
         balance = db.get_user_balance(ctx.author.id)
         lid = db.get_current_lottory()
         ticket_list = db.get_user_tickets(ctx.author.id,lid)
-        await ctx.send("{} balance is {:,}. You have {} tickets in the next drawing".format(ctx.author.name, balance, len(ticket_list)))
+        await ctx.send("{} balance is {:,}. You have {} tickets in the next drawing".format(ctx.author.name, round(balance,2), len(ticket_list)))
 
     @lottory.command()
     async def draw(self,ctx):
@@ -167,15 +172,15 @@ class Lottory:
 
             jackpot_results = []
             if len(jackpot_split) > 0:
-                jackpot_split = jackpot_progressive / len(jackpot_split)
-                total_payout += jackpot_split + payout_table[True][4]
+                jackpot_progressive_share = round(progressive / len(jackpot_split), 2)
+                jackpot_payout = round(payout_table[True][4] + jackpot_progressive_share, 2)
+                total_payout += progressive + payout_table[True][4]
 
                 for ticket_tuple in jackpot_split:
-
                     user_id = ticket_tuple[0]
                     ticket_value = ticket_tuple[1]
                     new_user_balance = db.modify_user_balance(user_id, jackpot_payout)
-                    jackpot_results.append([user_id, jackpot_payout, new_user_balance, ticket_value, progresive_split])
+                    jackpot_results.append([user_id, jackpot_payout, new_user_balance, ticket_value, jackpot_progressive_share])
 
                 split_won = 'won' if len(jackpot_results) == 1 else 'split'
                 await ctx.send("------------JACKPOT WINNAR!!!!!!-------------")
@@ -184,9 +189,9 @@ class Lottory:
                     jackpot_payout = result[1]
                     new_user_balance = result[2]
                     ticket_value = result[3]
-                    progresive_split = result[4]
+                    progressive_split = result[4]
                     user = await self.bot.get_user_info(user_id)
-                    await ctx.send('{} {} the Jackpot! Payout {:,}, your share of the progressive is {}! with ticket {}!!!!!!!'.format(user.name, split_won, jackpot_payout, progressive_split, ticket_value))
+                    await ctx.send('{} {} the Jackpot! Payout {:,}, your share of the progressive is {:,}! with ticket {}!!!!!!!'.format(user.name, split_won, jackpot_payout, progressive_split, ticket_value))
                     await user.send('You {} the Jackpot for lottory {} with ticket {}! {:,} has been deposited into your account. Your new balance is {}.'.format(split_won, lid, ticket_value, round(jackpot_payout,2), new_user_balance))
 
             for result in results:
@@ -260,16 +265,16 @@ class Lottory:
             new_progressive = progressive + progressive_add
             db.modify_lottory_jackpot_prog(lottory_id, new_progressive)
             new_balance = db.modify_user_balance(ctx.author.id, -1 * total_cost)
-            for ticket in ticket_list:
-                db.add_ticket_to_user(ticket.numbers, lottory_id, ctx.author.id)
-                if len(ticket_list) <= 5:
-                    await ctx.send('Quickpick ticket {} purchased by {}, good luck!'.format(ticket, ctx.author.nick))
-            if number_of_tickets > 500:
-                await ctx.author.send("You bought {} tickets. I'm not going to send you all of them.".format(number_of_tickets))
-            else:
-                for n in range(0, len(ticket_list), 100):
-                    await ctx.author.send("Lottory {} Quickpick tickets {}".format(lottory_id, ticket_list[n:n+100]))
-            await ctx.send("{} spent {:,} on {:,} tickets, new balance is {:,}. The jackpot is now {:,}".format(ctx.author.name, total_cost, number_of_tickets, new_balance, payout_table[True][4]+new_progressive))
+            db.add_ticket_to_user(ticket_list, lottory_id, ctx.author.id)
+            if len(ticket_list) <= 5:
+                for ticket in ticket_list:
+                    await ctx.send('Quickpick ticket {} purchased by {}, good luck!'.format(ticket, ctx.author.name))
+        if number_of_tickets > 500:
+            await ctx.author.send("You bought {} tickets. I'm not going to send you all of them.".format(number_of_tickets))
+        else:
+            for n in range(0, len(ticket_list), 100):
+                await ctx.author.send("Lottory {} Quickpick tickets {}".format(lottory_id, ticket_list[n:n+100]))
+        await ctx.send("{} spent {:,} on {:,} tickets, new balance is {:,}. The jackpot is now {:,}".format(ctx.author.name, total_cost, number_of_tickets, new_balance, payout_table[True][4]+new_progressive))
 
 def setup(bot):
     bot.add_cog(Lottory(bot))
