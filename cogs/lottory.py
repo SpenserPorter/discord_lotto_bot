@@ -1,16 +1,19 @@
 import discord
-from random import randint
-from secrets import randbelow
+import random
+import numpy as np
 import lotto_dao as db
 import asyncio
+import multiprocessing
+import itertools
 from discord.ext import commands
 
 
-payout_table = {True:{0:2000, 1:2000, 2:10000, 3:250000, 4:50000000},
-                False:{0:0, 1:0, 2:0, 3:20000, 4:2000000}}
+payout_table = {True:{0:0, 1:2000, 2:12000, 3:250000, 4:50000000},
+                False:{0:0, 1:0, 2:0, 3:25000, 4:2000000}}
 
 class Ticket(object):
 
+    __slots__ = ('numbers')
     def __init__(self, numbers):
         self.numbers = numbers
 
@@ -20,16 +23,52 @@ class Ticket(object):
 def quickpick(number_of_tickets=1):
     '''Returns a number of QP tickets'''
     qp_ticket_list = []
+    numlist = [x for x in range(1,24)]
+    for unused in range(number_of_tickets):
+        np.random.shuffle(numlist)
+        numbers = numlist[:4]
+        megaball = np.random.randint(1,12)
+        numbers.append(megaball)
+        qp_ticket_list.append(Ticket(numbers))
+    return qp_ticket_list
+
+def quickpick2(number_of_tickets=1):
+    '''Returns a number of QP tickets'''
+    qp_ticket_list = []
     for unused in range(number_of_tickets):
         numbers = []
         numlist=[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23]
         for unused in range(4):
             length = len(numlist)
-            numbers.append(numlist.pop(randbelow(length)))
-        megaball = randbelow(11) + 1
+            numbers.append(numlist.pop(np.random.randint(0,length)))
+        megaball = np.random.randint(1,12)
         numbers.append(megaball)
-        qp_ticket_list.append(Ticket(numbers))
+        qp_ticket_list.append(numbers)
     return qp_ticket_list
+
+def quickpick3(number_of_tickets=1):
+    numbers = range(1,24)
+    return [random.sample(numbers, 4) for i in range(number_of_tickets)]
+
+
+def quickpick_multi(number_of_tickets):
+    return mp_handler(number_of_tickets)
+
+numbers = [x for x in range(1,24)]
+all_the_combs = list(itertools.combinations(numbers, 4))
+
+def mp_handler(number_of_tickets):
+    number_of_processes = 10
+    avg_per = int(number_of_tickets / number_of_processes)
+    remainder = number_of_tickets % number_of_processes
+    inputs = [avg_per] * number_of_processes
+    inputs[0] += remainder
+
+    pool = multiprocessing.Pool(number_of_processes)
+    pool.map(quickpickmap, inputs)
+
+def quickpickmap(number_of_tickets=1):
+    return list(map(lambda x: list(all_the_combs[x]).append(random.randint(1,12)), [random.randint(0,len(all_the_combs)-1) for i in range(number_of_tickets)]))
 
 
 def parse_ticket(winner, ticket):
@@ -92,10 +131,10 @@ class Lottory:
         lid = db.get_current_lottory()
         await ctx.send("Lottory {} has begun, purchase tickets now!".format(lid))
 
-    @lottory.command()
+    @commands.group(invoke_without_command=True, aliases=['what'])
     async def info(self, ctx):
-        ctx.send("4 White Balls 1-23, 1 MEGABALL 1-11")
-        ctx.send("Match 4+1 = ", payout_table[True][4], "+ progressive! \n")
+        await ctx.send("4 White Balls 1-23, 1 MEGABALL 1-11 - Ticket cost 1000 \n Match 4+1 win {:,} + progressive jackpot \n Match 4    win {:,} \n Match 3+1 win {:,} \n Match 3    win {:,} \n Match 2+1 win {:,}\n Match 1+1 win {:,}".format(payout_table[True][4], payout_table[False][4], payout_table[True][3], payout_table[False][3], payout_table[True][2], payout_table[True][1]))
+
 
     @lottory.command()
     async def status(self,ctx):
@@ -212,6 +251,8 @@ class Lottory:
         await ctx.send("Lottory {} ended! {:,} tickets were sold for {:,}, {:,} was paid out for a payout ratio of {}%".format(lid, num_tickets, num_tickets * 1000, total_payout, round(payout_ratio, 2)))
         if len(jackpot_split) == 0:
             await ctx.send("No jackpot winner!")
+            lid = db.get_current_lottory()
+            db.modify_lottory_jackpot_prog(lid, progressive)
         else:
             await ctx.send("Jackpot has been reseeded to {:,}".format(payout_table[True][4]))
 
@@ -229,22 +270,16 @@ class Lottory:
             total_outflow += outflow
         if total_income > 0:
             payout_ratio = 100 * (total_outflow - total_income) / total_income
-            await ctx.send("Lottory {} stats: Total income: {} Total payout: {} Payout Ratio: {}%".format(lid_total, total_income, total_outflow, round(payout_ratio,2)))
+            await ctx.send("Lottory {} stats: Total income: {:,} Total payout: {:,} Payout Ratio: {}%".format(lid_total, total_income, total_outflow, round(payout_ratio,2)))
         else:
             await ctx.send("There are not stats yet!")
 
 
     @commands.group(invoke_without_command=True, aliases=['buy_tickets', 'bt'])
-    async def buy_ticket(self, ctx, ticket_value: int):
+    async def buy_ticket(self, ctx, ticket_value,):
         """
         Purchase a lottory ticket
         """
-        if ticket_value < 1:
-            await ctx.send('I\'m afraid I can\'t let you do that {}'.format(ctx.author.nick))
-            return
-        db.add_ticket_to_user()
-        s = '' if number_of_tickets == 1 else 's'
-        await ctx.send('{} bought {} ticket{}!'.format(ctx.author.nick, number_of_tickets, s))
 
     @buy_ticket.command(aliases=['quickpick'])
     async def qp(self, ctx, number_of_tickets=1):
@@ -260,12 +295,11 @@ class Lottory:
             await ctx.send("That would cost {:,}, your balance is {:,}. Broke ass bitch".format(total_cost, user_balance))
             return
         else:
-
             progressive_add = number_of_tickets * 100
             new_progressive = progressive + progressive_add
-            db.modify_lottory_jackpot_prog(lottory_id, new_progressive)
             new_balance = db.modify_user_balance(ctx.author.id, -1 * total_cost)
             db.add_ticket_to_user(ticket_list, lottory_id, ctx.author.id)
+            db.modify_lottory_jackpot_prog(lottory_id, progressive_add)
             if len(ticket_list) <= 5:
                 for ticket in ticket_list:
                     await ctx.send('Quickpick ticket {} purchased by {}, good luck!'.format(ticket, ctx.author.name))
