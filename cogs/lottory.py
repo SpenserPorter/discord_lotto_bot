@@ -7,9 +7,10 @@ import multiprocessing
 import itertools
 from discord.ext import commands
 
-
 payout_table = {True:{0:0, 1:2000, 2:12000, 3:250000, 4:50000000},
                 False:{0:0, 1:0, 2:0, 3:25000, 4:2000000}}
+numbers = [x for x in range(1,24)]
+all_the_combs = list(itertools.combinations(numbers, 4))
 
 class Ticket(object):
 
@@ -32,30 +33,8 @@ def quickpick(number_of_tickets=1):
         qp_ticket_list.append(Ticket(numbers))
     return qp_ticket_list
 
-def quickpick2(number_of_tickets=1):
-    '''Returns a number of QP tickets'''
-    qp_ticket_list = []
-    for unused in range(number_of_tickets):
-        numbers = []
-        numlist=[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23]
-        for unused in range(4):
-            length = len(numlist)
-            numbers.append(numlist.pop(np.random.randint(0,length)))
-        megaball = np.random.randint(1,12)
-        numbers.append(megaball)
-        qp_ticket_list.append(numbers)
-    return qp_ticket_list
-
-def quickpick3(number_of_tickets=1):
-    numbers = range(1,24)
-    return [random.sample(numbers, 4) for i in range(number_of_tickets)]
-
-
 def quickpick_multi(number_of_tickets):
     return mp_handler(number_of_tickets)
-
-numbers = [x for x in range(1,24)]
-all_the_combs = list(itertools.combinations(numbers, 4))
 
 def mp_handler(number_of_tickets):
     number_of_processes = 10
@@ -286,15 +265,15 @@ class Lottory:
         """
         Quick pick ticket
         """
-        ticket_list = quickpick(number_of_tickets)
         lottory_id = db.get_current_lottory()
         user_balance = db.get_user_balance(ctx.author.id)
-        progressive = db.get_lottory_jackpot_prog(lottory_id)
         total_cost = 1000 * number_of_tickets
         if user_balance < total_cost:
             await ctx.send("That would cost {:,}, your balance is {:,}. Broke ass bitch".format(total_cost, user_balance))
             return
         else:
+            progressive = db.get_lottory_jackpot_prog(lottory_id)
+            ticket_list = quickpick(number_of_tickets)
             progressive_add = number_of_tickets * 100
             new_progressive = progressive + progressive_add
             new_balance = db.modify_user_balance(ctx.author.id, -1 * total_cost)
@@ -308,7 +287,7 @@ class Lottory:
         else:
             for n in range(0, len(ticket_list), 100):
                 await ctx.author.send("Lottory {} Quickpick tickets {}".format(lottory_id, ticket_list[n:n+100]))
-        await ctx.send("{} spent {:,} on {:,} tickets, new balance is {:,}. The jackpot is now {:,}".format(ctx.author.name, total_cost, number_of_tickets, new_balance, payout_table[True][4]+new_progressive))
+        await ctx.send("{} spent {:,} on {:,} tickets, new balance is {:,}. The jackpot is now {:,}".format(ctx.author.name, total_cost, number_of_tickets, round(new_balance,2), payout_table[True][4]+new_progressive))
 
 def setup(bot):
     bot.add_cog(Lottory(bot))
