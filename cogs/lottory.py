@@ -21,7 +21,7 @@ class Ticket(object):
     def __repr__(self):
         return "{}-{}-{}-{}-M{}".format(*[n for n in self.numbers])
 
-def quickpick(number_of_tickets=1):
+def quickpick1(number_of_tickets=1):
     '''Returns a number of QP tickets'''
     qp_ticket_list = []
     numlist = [x for x in range(1,24)]
@@ -33,7 +33,7 @@ def quickpick(number_of_tickets=1):
         qp_ticket_list.append(Ticket(numbers))
     return qp_ticket_list
 
-def quickpick_multi(number_of_tickets):
+def quickpick(number_of_tickets):
     return mp_handler(number_of_tickets)
 
 def mp_handler(number_of_tickets):
@@ -44,7 +44,8 @@ def mp_handler(number_of_tickets):
     inputs[0] += remainder
 
     pool = multiprocessing.Pool(number_of_processes)
-    pool.map(quickpickmap, inputs)
+    results = pool.map(quickpick1, inputs)
+    return [result for result in results]
 
 def quickpickmap(number_of_tickets=1):
     return list(map(lambda x: list(all_the_combs[x]).append(random.randint(1,12)), [random.randint(0,len(all_the_combs)-1) for i in range(number_of_tickets)]))
