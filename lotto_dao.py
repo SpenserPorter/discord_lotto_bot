@@ -89,15 +89,16 @@ def get_user(user_id=None):
 
 def add_ticket_to_user(ticket_list, lottory_id, user_id):
     with LottoryConnection() as conn:
+        batch_size = 100000
         curr=conn.cursor()
+        curr.execute("PRAGMA synchronous = OFF")
+        curr.execute("PRAGMA journal_mode = MEMORY")
         curr.execute('BEGIN TRANSACTION')
-        sql_list = []
-        for ticket in ticket_list:
-            ticket_value = str(ticket.numbers)
-            sql_list.append((ticket_value, lottory_id, user_id))
         add_ticket_sql = 'INSERT INTO ticket (ticket_value, lottory_id, user_id) VALUES (?,?,?)'
-        curr.executemany(add_ticket_sql, sql_list)
-        conn.commit()
+        for n in range(0, len(ticket_list), batch_size):
+            values_list = map(lambda x: (str(x), lottory_id, user_id), ticket_list[n:n+batch_size])
+            curr.executemany(add_ticket_sql, values_list)
+            conn.commit()
 
 def get_user_balance(user_id):
     with LottoryConnection() as conn:
