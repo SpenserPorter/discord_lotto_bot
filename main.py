@@ -14,7 +14,7 @@ async def run():
     Where the bot gets started. If you wanted to create an database connection pool or other session for the bot to use,
     it's recommended that you create it here and pass it to the bot as a kwarg.
     """
-    bot = Bot(description='It\'s the lottory! (It\'s not rigged)')
+    bot = Bot(description='It\'s the lottory! (It\'s not rigged) \n 4 Unique Numbers 1-23, order doesn\'t matter. 1 MEGABALL 1-11 \n !give-money lotto-bot AMOUNT to deposit!')
     token = os.getenv('LOTTO_BOT_TOKEN')
 
     try:
@@ -82,7 +82,6 @@ class Bot(commands.Bot):
               f'Owner: {self.app_info.owner}\n'
               f'Template Maker: SourSpoon / Spoon#7805')
         print('-' * 10)
-
 
     async def add_all_users(self):
         db.initialize_tables()

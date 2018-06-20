@@ -3,6 +3,7 @@ import random
 import numpy as np
 import lotto_dao as db
 import asyncio
+import re
 from multiprocessing import Pool
 from itertools import combinations
 from discord.ext import commands
@@ -82,9 +83,21 @@ class Lottory:
     async def on_message(self, message):
         channel = message.channel
         if message.author.id == 292953664492929025:
-            await channel.send("Shut up {}".format(message.author.nick))
+            try:
+                sender_url = message.embeds[0].author.icon_url
+                description = message.embeds[0].description
+                receiver_id = int(re.findall(r'<@!(\d+)>', description)[0])
+                amount = int(re.findall(r'your .(\d{1,3}(,\d{3})*(\.\d+)?)', description)[0][0].replace(',', ''))
+                sender_id = int(re.findall(r'tars/(\d+)/', sender_url)[0])
+            except:
+                return
+            if receiver_id == 456460945074421781:
+                new_balance = db.modify_user_balance(sender_id, amount)
+                sender = await self.bot.get_user_info(sender_id)
+                await channel.send("{:,} received from {}. Your balance is now {:,}".format(amount, sender.name, new_balance))
 
-    @commands.group(invoke_without_command=True)
+
+    @commands.group(invoke_without_command=True, hidden=True)
     async def money_please(self, ctx, amount: int):
         '''adds amount to all users balance'''
         if ctx.author.id != 154415714411741185:
@@ -100,7 +113,7 @@ class Lottory:
     @commands.group(invoke_without_command=True)
     async def tickets(self, ctx):
         """
-        Show all tickets for current lottory
+        DM all tickets for current lottory
         """
         lottory = db.get_current_lottory()
         ticket_list = db.get_user_tickets(ctx.author.id,lottory)
@@ -108,7 +121,7 @@ class Lottory:
         for n in range(0, len(ticket_list), 100):
             await ctx.author.send('{}'.format(ticket_list[n:n+100]))
 
-    @commands.group(invoke_without_command=True,aliases=['lottery'])
+    @commands.group(invoke_without_command=True,aliases=['lottery'], hidden=True)
     async def lottory(self,ctx):
         if ctx.author.id != 154415714411741185:
             await ctx.send("You're not my real dad!")
@@ -117,13 +130,28 @@ class Lottory:
         lid = db.get_current_lottory()
         await ctx.send("Lottory {} has begun, purchase tickets now!".format(lid))
 
+    @lottory.command()
+    async def withdraw(self,ctx,amount:int):
+        balance = db.get_user_balance(ctx.author.id)
+        if amount <= 0:
+            ctx.send("You're broke u bitch")
+            return
+        if amount > balance:
+            amount = balance
+        new_balance = db.modify_user_balance(ctx.author.id, -1 * amount)
+        await ctx.send("{} withdrew {:,}. Your new balance is {:,}. An admin will credit your RiggBott acount soon!".format(ctx.author.name, amount, new_balance))
+        admin = await self.bot.get_user_info(154415714411741185)
+        await admin.send("Please run --> !add-money cash {} {}  <--".format(ctx.author.name, amount))
+
     @commands.group(invoke_without_command=True, aliases=['what'])
     async def info(self, ctx):
+        '''Displays the paytable'''
         await ctx.send("4 White Balls 1-23, 1 MEGABALL 1-11 - Ticket cost {:,} \n Match 4+1 win {:,} + progressive jackpot \n Match 4    win {:,} \n Match 3+1 win {:,} \n Match 3    win {:,} \n Match 2+1 win {:,}\n Match 1+1 win {:,}".format(ticket_cost, payout_table[True][4], payout_table[False][4], payout_table[True][3], payout_table[False][3], payout_table[True][2], payout_table[True][1]))
 
 
-    @lottory.command()
+    @commands.group(invoke_without_command=True)
     async def status(self,ctx):
+        '''Display the current lottory status'''
         lid = db.get_current_lottory()
         tickets = db.get_lottory_tickets(lid)
         num_tickets = len(tickets)
@@ -133,6 +161,7 @@ class Lottory:
 
     @commands.group(invoke_without_command=True)
     async def balance(self,ctx):
+        '''Show your balance and number of tickets in current drawing'''
         balance = db.get_user_balance(ctx.author.id)
         lid = db.get_current_lottory()
         ticket_list = db.get_user_tickets(ctx.author.id,lid)
@@ -140,6 +169,7 @@ class Lottory:
 
     @commands.group(invoke_without_command=True)
     async def draw(self,ctx):
+        '''Start the next drawing'''
         #if ctx.author.id != 154415714411741185:
         #    await ctx.send("You're not my real dad bitch!")
         #    return
@@ -266,16 +296,45 @@ class Lottory:
 
 
     @commands.group(invoke_without_command=True, aliases=['buy_tickets', 'bt'])
-    async def buy_ticket(self, ctx, *ticket_value):
+    async def buy_ticket(self, ctx, first: int, second: int, third: int, fourth: int, mega: int):
         """
-        Purchase a lottory ticket
+        Purchase a lottory ticket, enter all 5 numbers seperated by spaces.
         """
+        lottory_id = db.get_current_lottory()
+        user_balance = db.get_user_balance(ctx.author.id)
+        ticket = [first,second,third,fourth,mega]
+        ticket_print = Ticket(ticket)
+
+        if user_balance < ticket_cost:
+            await ctx.send("That would cost {:,}, your balance is {:,}. Broke ass bitch".format(ticket_cost, user_balance))
+            return
+        for number in ticket[:4]:
+            if number not in numbers:
+                await ctx.send("{} is not a valid ticket, first 4 numbers must be between 1-23".format(ticket))
+                return
+        if ticket[4] not in range(1,12):
+            await ctx.send("{} is not a valid ticket, megaball must be between 1-11".format(ticket))
+            return
+        for i in range(3):
+            if ticket[i] in ticket[:i]:
+                await ctx.send("{} is not a valid ticket, first four numbers must be unique".format(ticket_print))
+                return
+            if ticket[i] in ticket[i+1:4]:
+                await ctx.send("{} is not a valid ticket, first four numbers must be unique".format(ticket_print))
+                return
+        progressive_add = ticket_cost * .1
+        db.add_ticket_to_user([ticket], lottory_id, ctx.author.id)
+        new_balance = db.modify_user_balance(ctx.author.id, -1 * ticket_cost)
+        db.modify_lottory_jackpot_prog(lottory_id, ticket_cost)
+        new_progressive = db.get_lottory_jackpot_prog(lottory_id) + payout_table[True][4]
+        await ctx.send("{} purchased ticket {}, your balance is now {}. The progressive jackpot is now {}.".format(ctx.author.name, Ticket(ticket), new_balance, new_progressive))
+
 
 
     @buy_ticket.command(aliases=['quickpick'])
     async def qp(self, ctx, number_of_tickets=1):
         """
-        Quick pick ticket
+        Quickpick tickets, enter a number to choose how many you want!
         """
         lottory_id = db.get_current_lottory()
         user_balance = db.get_user_balance(ctx.author.id)
@@ -285,13 +344,12 @@ class Lottory:
             return
         else:
             async with ctx.typing():
-                progressive = db.get_lottory_jackpot_prog(lottory_id)
                 ticket_list = quickpick(number_of_tickets)
                 progressive_add = number_of_tickets * ticket_cost * .1
-                new_progressive = progressive + progressive_add
                 db.add_ticket_to_user(ticket_list, lottory_id, ctx.author.id)
                 new_balance = db.modify_user_balance(ctx.author.id, -1 * total_cost)
                 db.modify_lottory_jackpot_prog(lottory_id, progressive_add)
+                new_progressive = db.get_lottory_jackpot_prog(lottory_id)
                 if len(ticket_list) <= 5:
                     for ticket in ticket_list:
                         await ctx.send('Quickpick ticket {} purchased by {}, good luck!'.format(Ticket(ticket), ctx.author.name))
