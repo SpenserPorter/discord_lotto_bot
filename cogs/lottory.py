@@ -146,7 +146,7 @@ class Lottory:
     @commands.group(invoke_without_command=True, aliases=['what'])
     async def info(self, ctx):
         '''Displays the paytable'''
-        await ctx.send("4 White Balls 1-23, 1 MEGABALL 1-11 - Ticket cost {:,} \n Match 4+1 win {:,} + progressive jackpot \n Match 4    win {:,} \n Match 3+1 win {:,} \n Match 3    win {:,} \n Match 2+1 win {:,}\n Match 1+1 win {:,}".format(ticket_cost, payout_table[True][4], payout_table[False][4], payout_table[True][3], payout_table[False][3], payout_table[True][2], payout_table[True][1]))
+        await ctx.send("4 White Balls 1-23, 1 MEGABALL 1-11 - Ticket cost {:,} \n Match 4+1 win {:,} + progressive jackpot \n Match 4    win {:,} \n Match 3+1 win {:,} \n Match 3    win {:,} \n Match 2+1 win {:,}\n Match 1+1 win {:,} \n Chance to win ANY prize 1:17".format(ticket_cost, payout_table[True][4], payout_table[False][4], payout_table[True][3], payout_table[False][3], payout_table[True][2], payout_table[True][1]))
 
 
     @commands.group(invoke_without_command=True)
@@ -271,7 +271,7 @@ class Lottory:
         await ctx.send("Lottory {} ended! {:,} tickets were sold for {:,}, {:,} was paid out for a payout ratio of {}%".format(lid, num_tickets, income, round(total_payout,2), round(payout_ratio, 2)))
         if len(jackpot_split) == 0:
             await ctx.send("No jackpot winner!")
-            lid = db.get_current_lottory()
+            lid = db.get_current_lottory() #Add progressive to next lottory
             db.modify_lottory_jackpot_prog(lid, progressive)
         else:
             await ctx.send("Jackpot has been reseeded to {:,}".format(payout_table[True][4]))
@@ -325,7 +325,7 @@ class Lottory:
         progressive_add = ticket_cost * .1
         db.add_ticket_to_user([ticket], lottory_id, ctx.author.id)
         new_balance = db.modify_user_balance(ctx.author.id, -1 * ticket_cost)
-        db.modify_lottory_jackpot_prog(lottory_id, ticket_cost)
+        db.modify_lottory_jackpot_prog(lottory_id, progressive_add)
         new_progressive = db.get_lottory_jackpot_prog(lottory_id) + payout_table[True][4]
         await ctx.send("{} purchased ticket {}, your balance is now {}. The progressive jackpot is now {}.".format(ctx.author.name, Ticket(ticket), new_balance, new_progressive))
 
