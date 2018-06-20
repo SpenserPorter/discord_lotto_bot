@@ -156,7 +156,7 @@ class Lottory:
         balls = ['First', 'Second', 'Third', 'Fourth', 'MEGA']
         async with ctx.typing():
             for n in range(5):
-                await asyncio.sleep(2)
+                await asyncio.sleep(1)
                 await ctx.send("{} ball is {}".format(balls[n], winning_numbers[n]))
             await ctx.send("Winning numbers are {}".format(Ticket(winning_numbers)))
 
@@ -183,7 +183,7 @@ class Lottory:
                 balance_modifier = 0
 
                 for ticket_tuple in list_of_winning_tickets:
-                    ticket_value = ticket_tuple[0]
+                    ticket_value = Ticket(ticket_tuple[0])
                     ticket_payout = ticket_tuple[1]
 
                     if ticket_payout == payout_table[True][4]:
@@ -208,23 +208,24 @@ class Lottory:
                         jackpot_results[user_id] = [jackpot_payout, new_user_balance, [ticket_value], jackpot_progressive_share]
                     else:
                         jackpot_results[user_id][0] += jackpot_payout
-                        jackpot_results[user_id][2] = new_user_balance
-                        jackpot_results[user_id][3].append(ticket_value)
-                        jackpot_results[user_id][4] += progressive_share
+                        jackpot_results[user_id][1] = new_user_balance
+                        jackpot_results[user_id][2].append(ticket_value)
+                        jackpot_results[user_id][3] += jackpot_progressive_share
 
                 split_won = 'won' if len(jackpot_results) == 1 else 'split'
                 await ctx.send("------------JACKPOT WINNAR!!!!!!-------------")
                 for user_id, result in jackpot_results.items():
                     jackpot_payout = result[0]
                     new_user_balance = result[1]
-                    ticket_values = result[2]
+                    ticket_values = result[2] if len(result[2]) <= 10 else len(result[2])
                     progressive_split = result[3]
                     user = await self.bot.get_user_info(user_id)
-                    await ctx.send('{} {} the Jackpot! Payout {:,}, your share of the progressive is {:,}! with ticket {}!!!!!!!'.format(user.name, split_won, jackpot_payout, progressive_split, ticket_values))
+                    await ctx.send('{} {} the Jackpot! Payout {:,}, your share of the progressive is {:,}! with {} tickets!!'.format(user.name, split_won, round(jackpot_payout,2), round(progressive_split,2), ticket_values))
                     await user.send('You {} the Jackpot for lottory {} with ticket {}! {:,} has been deposited into your account. Your new balance is {}.'.format(split_won, lid, ticket_value, round(jackpot_payout,2), new_user_balance))
 
             for user_id, result in results.items():
-                balance_modifier=result[0]
+                jackpot_balance_modifier = jackpot_results[user_id][0] if user_id in jackpot_results else 0
+                balance_modifier= result[0] + jackpot_balance_modifier
                 new_user_balance=result[1]
                 winning_tickets=result[2]
                 user = await self.bot.get_user_info(user_id)
