@@ -10,8 +10,8 @@ from discord.ext import commands
 
 ticket_cost = 10000
 
-payout_table = {True:{0:0*ticket_cost, 1:4*ticket_cost, 2:15*ticket_cost, 3:200*ticket_cost, 4:15000*ticket_cost},
-                False:{0:0*ticket_cost, 1:0*ticket_cost, 2:0*ticket_cost, 3:20*ticket_cost, 4:1500*ticket_cost}}
+payout_table = {True:{0:0*ticket_cost, 1:4*ticket_cost, 2:10*ticket_cost, 3:150*ticket_cost, 4:15000*ticket_cost},
+                False:{0:0*ticket_cost, 1:0*ticket_cost, 2:2*ticket_cost, 3:15*ticket_cost, 4:1250*ticket_cost}}
 
 
 numbers = [x for x in range(1,24)]
@@ -26,7 +26,7 @@ class Ticket(object):
     def __repr__(self):
         return "{}-{}-{}-{}-M{}".format(*[n for n in self.numbers])
 
-def ticket_generator(number_of_tickets=1):
+def quickpick(number_of_tickets=1):
     '''Returns a number of QP tickets'''
     ticket_list = []
     numlist = [x for x in range(1,24)]
@@ -38,7 +38,7 @@ def ticket_generator(number_of_tickets=1):
         ticket_list.append(numbers)
     return ticket_list
 
-def quickpick(number_of_tickets=1):
+def quickpick2(number_of_tickets=1):
     results = []
     for result in mp_handler(number_of_tickets):
         results.extend(result)
@@ -118,7 +118,7 @@ class Lottory:
         lottory = db.get_current_lottory()
         ticket_list = db.get_user_tickets(ctx.author.id,lottory)
         await ctx.send('{} has {} tickets in the curret drawing.'.format(ctx.author, len(ticket_list)))
-        for n in range(0, len(ticket_list), 100):
+        for n in range(0, len(ticket_list), 75):
             await ctx.author.send('{}'.format(ticket_list[n:n+100]))
 
     @commands.group(invoke_without_command=True,aliases=['lottery'], hidden=True)

@@ -3,7 +3,7 @@ import sqlite3
 class LottoryConnection(object):
 
     def __init__(self):
-        self.sqlite_file = 'lottodb.sqlite'    # name of the sqlite database file
+        self.sqlite_file = 'data/lottodb.sqlite'    # name of the sqlite database file
 
     def __enter__(self):
         self.connection = sqlite3.connect(self.sqlite_file, timeout=30.0)
