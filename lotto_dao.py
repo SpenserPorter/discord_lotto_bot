@@ -81,8 +81,8 @@ def add_user(user_id):
 def get_user(user_id=None):
     with LottoryConnection() as conn:
         curr = conn.cursor()
-        all_users = '' if user_id is None else 'WHERE user_id ={}'.format(user_id)
-        get_user_sql = 'SELECT user_id FROM user{};'.format(all_users)
+        one_user = '' if user_id is None else 'WHERE user_id={}'.format(user_id)
+        get_user_sql = 'SELECT user_id FROM user{};'.format(one_user)
         curr.execute(get_user_sql)
         return curr.fetchall()
 
