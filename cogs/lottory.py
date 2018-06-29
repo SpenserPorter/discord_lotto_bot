@@ -40,7 +40,7 @@ def parse_ticket(winner, ticket):
     return mega, len(match)
 
 def add_ticket_to_dict(result_dict, user_id, ticket_value, payout):
-    if user_id not in dict:
+    if user_id not in result_dict:
         result_dict[user_id] = [[ticket_value, payout]]
     else:
         result_dict[user_id].append([ticket_value, payout])
@@ -98,15 +98,29 @@ class Lottory:
             await ctx.author.send('{}'.format(ticket_list[n:n+50]))
 
     @commands.group(invoke_without_command=True,aliases=['lottery'], hidden=True)
-    async def lottory_init(self,ctx):
+    async def lottory(self, ctx, confirm):
         '''Advances to next lottory, this will abandon all tickets from previous if
             it was not drawn first!'''
         if ctx.author.id != 154415714411741185:
             await ctx.send("You're not my real dad!")
             return
+        if confirm != "confirm":
+            await ctx.send("Please confirm")
+            return
         db.add_lottory(0)
         lottory_id = db.get_current_lottory()
         await ctx.send("Lottory {} has begun, purchase tickets now!".format(lottory_id))
+
+    @lottory.command(hidden=True)
+    async def modify_prog(self, ctx, amount: int):
+        if ctx.author.id != 154415714411741185:
+            await ctx.send("You're not my real dad!")
+            return
+        lid = db.get_current_lottory()
+        new_prog = db.modify_lottory_jackpot_prog(lid, amount)
+        jackpot = new_prog + payout_table[True][4]
+        await ctx.send("Lottory {} jackpot is now {}".format(lid, jackpot))
+
 
     @commands.group(invoke_without_comands=True, aliases=['wd'])
     async def withdraw(self,ctx,amount:int):
@@ -250,8 +264,8 @@ class Lottory:
                     ticket_value = Ticket(ticket_tuple[0])
                     losers.append(ticket_value)
                 user = await self.bot.get_user_info(user_id)
-                for n in range(0,len(losers),50)
-                    user.send("Way to lose, loser. Your losing tickets for lottory {}: {}".format(lottory_id, losers[n:n+50])
+                for n in range(0,len(losers),50):
+                    user.send("Way to lose, loser. Your losing tickets for lottory {}: {}".format(lottory_id, losers[n:n+50]))
 
         income = ticket_cost * num_tickets
         payout_ratio = 100 * (total_payout - income) / income

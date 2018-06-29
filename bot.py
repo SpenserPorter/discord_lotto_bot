@@ -1,6 +1,5 @@
 import asyncio
 import datetime
-import json
 import logging
 from pathlib import Path
 import os
@@ -84,20 +83,23 @@ class Bot(commands.Bot):
         print('-' * 10)
 
     async def add_all_users(self):
+        '''Dev function, runs DB migrations and adds all users to DB'''
         db.initialize_tables()
         for user in self.users:
             db.add_user(user.id)
 
     async def on_message_edit(self, before, after):
-           if after.author.bot:
-               return
-           after_lw = after.content.lower()
-           before_lw = before.content.lower()
-           if after_lw.find("rigged") != -1 and before_lw.find("rigged") == -1:
-               channel = after.channel
-               await channel.send("I see what you did {}, it's not rigged ubitch".format(after.author.nick))
+        '''Prevent rigged accusations with extreme predjustice'''
+        if after.author.bot:
+           return
+        after_lw = after.content.lower()
+        before_lw = before.content.lower()
+        if after_lw.find("rigged") != -1 and before_lw.find("rigged") == -1:
+           channel = after.channel
+           await channel.send("I see what you did {}, it's not rigged ubitch".format(after.author.nick))
 
     async def on_message(self, message):
+        '''Prevent rigged accusations with extreme predjustice'''
         channel = message.channel
         print(message.author, message.author.id, message.content)
         if message.author.bot:
