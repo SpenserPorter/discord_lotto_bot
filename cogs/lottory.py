@@ -1,11 +1,8 @@
 import discord
-import random
 import numpy as np
 import lotto_dao as db
 import asyncio
 import re
-from multiprocessing import Pool
-from itertools import combinations
 from discord.ext import commands
 
 ticket_cost = 1000
@@ -15,7 +12,6 @@ payout_table = {True:{0:0*ticket_cost, 1:4*ticket_cost, 2:10*ticket_cost, 3:150*
                 False:{0:0*ticket_cost, 1:0*ticket_cost, 2:2*ticket_cost, 3:15*ticket_cost, 4:1250*ticket_cost}}
 
 numbers = [x for x in range(1,24)]
-all_the_combs = list(combinations(numbers, 4))
 
 class Ticket(object):
     __slots__ = ('numbers')
@@ -43,12 +39,12 @@ def parse_ticket(winner, ticket):
     mega = winner[4] == ticket[4]
     return mega, len(match)
 
-def add_ticket_to_winner_dict(winner_dict, user_id, ticket_value, payout):
-    if user_id not in winner_dict:
-        winner_dict[user_id] = [[ticket_value, payout]]
+def add_ticket_to_dict(result_dict, user_id, ticket_value, payout):
+    if user_id not in dict:
+        result_dict[user_id] = [[ticket_value, payout]]
     else:
-        winner_dict[user_id].append([ticket_value, payout])
-    return winner_dict
+        result_dict[user_id].append([ticket_value, payout])
+    return result_dict
 
 def determine_payout(mega, match):
     return payout_table[mega][match]
@@ -173,6 +169,7 @@ class Lottory:
         num_tickets = len(ticket_list)
         progressive_split = []
         winner_dict = {}
+        loser_dict = {}
         total_payout = 0
 
         async with ctx.typing():
@@ -183,7 +180,9 @@ class Lottory:
                 ticket_payout = determine_payout(mega, match)
 
                 if ticket_payout != 0:
-                    winner_dict = add_ticket_to_winner_dict(winner_dict, user_id, ticket_value, ticket_payout)
+                    winner_dict = add_ticket_to_dict(winner_dict, user_id, ticket_value, ticket_payout)
+                else:
+                    loser_dict = add_ticket_to_dict(loser_dict, user_id, ticket_value, ticket_payout)
 
         results = {}
         async with ctx.typing():
@@ -244,6 +243,15 @@ class Lottory:
                 if len(winning_tickets) < 100:
                     for n in range(0, len(winning_tickets), 50):
                         await user.send("Your winnings tickets for Lottory {}: Winning Numbers:{} Your winners: {}".format(lottory_id, winning_numbers, winning_tickets[n:n+50]))
+
+            for user_id, list_of_losing_tickets in loser_dict.items():
+                losers = []
+                for ticket_tuple in list_of_losing_tickets:
+                    ticket_value = Ticket(ticket_tuple[0])
+                    losers.append(ticket_value)
+                user = await self.bot.get_user_info(user_id)
+                for n in range(0,len(losers),50)
+                    user.send("Way to lose, loser. Your losing tickets for lottory {}: {}".format(lottory_id, losers[n:n+50])
 
         income = ticket_cost * num_tickets
         payout_ratio = 100 * (total_payout - income) / income

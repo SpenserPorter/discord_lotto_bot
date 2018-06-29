@@ -6,7 +6,7 @@ class LottoryConnection(object):
         self.sqlite_file = 'data/lottodb.sqlite'    # name of the sqlite database file
 
     def __enter__(self):
-        self.connection = sqlite3.connect(self.sqlite_file, timeout=30.0)
+        self.connection = sqlite3.connect(self.sqlite_file, timeout=10.0)
         return self.connection
 
     def __exit__(self, type, value, traceback):
