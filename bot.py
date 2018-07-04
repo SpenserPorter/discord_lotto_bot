@@ -14,7 +14,7 @@ async def run():
     it's recommended that you create it here and pass it to the bot as a kwarg.
     """
     bot = Bot(description='It\'s the lottory! (It\'s not rigged) \n 4 Unique Numbers 1-23, order doesn\'t matter. 1 MEGABALL 1-11 \n !give-money lotto-bot AMOUNT to deposit!')
-    token = os.getenv('TEST_BOT_TOKEN')
+    token = os.getenv('LOTTO_BOT_TOKEN')
 
     try:
         await bot.start(token)
@@ -50,7 +50,7 @@ class Bot(commands.Bot):
         I have made this a coroutine just to show that it can be done. If you needed async logic in here it can be done.
         A good example of async logic would be retrieving a prefix from a database.
         """
-        prefix = ['!']
+        prefix = ['$']
         return commands.when_mentioned_or(*prefix)(bot, message)
 
     async def load_all_extensions(self):

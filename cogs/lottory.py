@@ -139,7 +139,9 @@ class Lottory:
     @commands.group(invoke_without_command=True, aliases=['what'])
     async def info(self, ctx):
         '''Displays the paytable'''
-        await ctx.send("4 White Balls 1-23, 1 MEGABALL 1-11 - Ticket cost {:,} \n Match 4+1 win {:,} + progressive jackpot \n Match 4    win {:,} \n Match 3+1 win {:,} \n Match 3    win {:,} \n Match 2+1 win {:,}\n Match 1+1 win {:,} \n Chance to win ANY prize 1:17".format(ticket_cost, payout_table[True][4], payout_table[False][4], payout_table[True][3], payout_table[False][3], payout_table[True][2], payout_table[True][1]))
+        lid = db.get_current_lottory()
+        progressive = db.get_lottory_jackpot_prog(lid)
+        await ctx.send("4 White Balls 1-23, 1 MEGABALL 1-11 - Ticket cost {:,} \n Match 4+1 win {:,} + {:,} progressive! \n Match 4    win {:,} \n Match 3+1 win {:,} \n Match 3    win {:,} \n Match 2+1 win {:,}\n Match 1+1 win {:,} \n Chance to win ANY prize 1:17".format(ticket_cost, payout_table[True][4], progressive, payout_table[False][4], payout_table[True][3], payout_table[False][3], payout_table[True][2], payout_table[True][1]))
 
     @commands.group(invoke_without_command=True)
     async def status(self,ctx):

@@ -29,22 +29,23 @@ def determine_outside(number):
 
 class Wager:
 
-    def __init__(self, space, amount):
-        self.space = space
+    def __init__(self, amount, space):
         self.amount = amount
+        self.space = space
 
 class RouletteGame:
 
-    def __init__(self, bot, ctx, user_id, amount, space):
+    def __init__(self, bot, ctx):
         self.ctx = ctx
         self.bot = bot
-        self.wager_dict = {user_id:[Wager(amount, space)]}
+        self.wager_dict = {}
 
-    async def add_wager(self, user_id, space, amount):
-        if user_id not in self.wager_dict:
-            self.wager_dict[user_id] = [Wager(space, amount)]
-        else:
-            self.wager_dict[user_id].append(Wager(space,amount))
+    async def add_wagers(self, user_id, amount, spaces):
+        for space in spaces:
+            if user_id not in self.wager_dict:
+                self.wager_dict[user_id] = [Wager(amount, space)]
+            else:
+                self.wager_dict[user_id].append(Wager(amount, space))
 
     async def resolve(self):
         winning_number = spin()
@@ -55,7 +56,7 @@ class RouletteGame:
             for wager in wager_list:
                 if str(wager.space) in results:
                     payout += outside_dict[str(wager.space)][1] * wager.amount
-                elif wager.space == winning_number:
+                elif wager.space == str(winning_number):
                     payout += 36 * wager.amount
             new_balance = db.modify_user_balance(user_id, payout)
             user = await self.bot.get_user_info(user_id)
@@ -68,32 +69,45 @@ class Roulette:
         self.game = None
 
     @commands.group(invoke_without_command=True)
-    async def roulette(self, ctx, amount:int, space):
+    async def roulette(self, ctx, amount:int, *spaces):
         user_id = ctx.author.id
         balance = db.get_user_balance(user_id)
 
         #Validate user balance is sufficient and space is valid
-        if amount > balance:
-            await ctx.send("You only have {} u bitch".format(balance))
+        try:
+            num_bets = len(spaces)
+            total_amount = amount * num_bets
+        except:
+            total_amount = amount
+            num_bets = 1
+            spaces = [spaces]
+        if total_amount > balance:
+            await ctx.send("That would cost {} but you only have {} u broke ass bitch".format(total_amount, balance))
             return
-        if str(space) not in outside_dict:
-            try:
-                if int(space) not in range(1,37):
-                    await ctx.send("{} is not a valid number, please choose 1 to 36".format(space))
+        for space in spaces:
+            if str(space) not in outside_dict:
+                try:
+                    if int(space) not in range(1,37):
+                        await ctx.send("{} is not a valid number, please choose 1-36".format(space))
+                        return
+                except:
+                    await ctx.send("{} is not a valid space u mook".format(space))
                     return
-            except:
-                await ctx.send("{} is not a valid space u mook".format(space))
-                return
 
         #Initiate new game if no current game, add wager to current game otherwise.
-        db.modify_user_balance(user_id, -1 * amount)
-        if self.game:
-            await self.game.add_wager(user_id, space, amount)
-            await ctx.send("{} bet {} on {}, good luck!".format(ctx.author, amount, space))
+        db.modify_user_balance(user_id, -1 * total_amount)
+        if self.game is not None:
+            await self.game.add_wagers(user_id, amount, spaces)
+            output_brackets = ["{}"] * num_bets
+            output_string = "{} bet {} on {}".format(ctx.author, amount, ', '.join(output_brackets))
+            await ctx.send(output_string.format(*spaces))
         else:
-            await ctx.send("{} bet {} on {}, good luck!".format(ctx.author, amount, space))
-            self.game = RouletteGame(self.bot, ctx, user_id, space, amount)
-            await ctx.send("A new game of Not Rigged Roulette has started! User !roulette <amount> <space> to raise your bets!")
+            output_brackets = ["{}"] * num_bets
+            output_string = "{} bet {} on {}".format(ctx.author, amount, ', '.join(output_brackets))
+            await ctx.send(output_string.format(*spaces))
+            self.game = RouletteGame(self.bot, ctx)
+            await self.game.add_wagers(user_id, amount, spaces)
+            await ctx.send("A new game of Not Rigged Roulette has started! User $roulette <amount> <space> to raise your bets!")
             await ctx.send("31s remaining!")
             async with ctx.typing():
                 await asyncio.sleep(21)
@@ -102,6 +116,18 @@ class Roulette:
                 await asyncio.sleep(10)
                 await self.game.resolve()
             self.game = None
+
+    @commands.group(invoke_without_command=True, aliases=["lb"])
+    async def leaderboard(self,ctx):
+        '''Shows your balance and number of tickets in current drawing'''
+        user_list = db.get_user()
+        output = []
+        for user_id in user_list:
+            user = await self.bot.get_user_info(user_id[0])
+            if not user.bot:
+                balance = db.get_user_balance(user.id)
+                output.append("{} - {:,}".format(user.name, balance))
+        await ctx.send("{}".format("\n".join(output)))
 
 
 def setup(bot):
