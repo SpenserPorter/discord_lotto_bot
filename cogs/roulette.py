@@ -121,12 +121,18 @@ class Roulette:
     async def leaderboard(self,ctx):
         '''Shows your balance and number of tickets in current drawing'''
         user_list = db.get_user()
-        output = []
+        balances = []
         for user_id in user_list:
             user = await self.bot.get_user_info(user_id[0])
             if not user.bot:
                 balance = db.get_user_balance(user.id)
-                output.append("{} - {:,}".format(user.name, balance))
+                balances.append((balance, user.name))
+        sorted(balances, key=lambda balances: balances[0])
+        rank = 1
+        output = []
+        for user_balance, user_name in balances:
+            output.append("{}: {} - {:,}".format(rank, user_name, balance))
+            rank += 1
         await ctx.send("{}".format("\n".join(output)))
 
 

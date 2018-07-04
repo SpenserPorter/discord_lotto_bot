@@ -67,8 +67,6 @@ class Lottory:
             except:
                 return
             if receiver_id == 456460945074421781: #Lotto-bot user.id
-                if db.get_user(sender_id) is None:
-                    db.add_user(sender_id)
                 new_balance = db.modify_user_balance(sender_id, amount)
                 sender = await self.bot.get_user_info(sender_id)
                 await channel.send("{:,} received from {}. Your balance is now {:,}".format(amount, sender.name, new_balance))
