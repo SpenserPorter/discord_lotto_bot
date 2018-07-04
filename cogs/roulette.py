@@ -131,7 +131,7 @@ class Roulette:
         rank = 1
         output = []
         for user_balance, user_name in balances:
-            output.append("{}: {} - {:,}".format(rank, user_name, balance))
+            output.append("{}: {} - {:,}".format(rank, user_name, user_balance))
             rank += 1
         await ctx.send("{}".format("\n".join(output)))
 
