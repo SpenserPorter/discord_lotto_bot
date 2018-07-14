@@ -18,7 +18,7 @@ outside_dict = {'red':([1,3,5,7,9,12,14,16,18,19,21,23,25,27,30,32,34,36],2),
                 '25-36':(range(25,37),3)
                 }
 def spin():
-    return random.randint(1,37)
+    return random.randint(1,36)
 
 def determine_outside(number):
     results = []

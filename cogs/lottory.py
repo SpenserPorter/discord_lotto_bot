@@ -8,7 +8,7 @@ from discord.ext import commands
 ticket_cost = 1000
 
 #{Megaball:{num_matches:payout}}
-payout_table = {True:{0:0*ticket_cost, 1:4*ticket_cost, 2:10*ticket_cost, 3:150*ticket_cost, 4:15000*ticket_cost},
+payout_table = {True:{0:0*ticket_cost, 1:3*ticket_cost, 2:10*ticket_cost, 3:150*ticket_cost, 4:15000*ticket_cost},
                 False:{0:0*ticket_cost, 1:0*ticket_cost, 2:2*ticket_cost, 3:15*ticket_cost, 4:1250*ticket_cost}}
 
 numbers = [x for x in range(1,24)]
@@ -139,7 +139,7 @@ class Lottory:
         '''Displays the paytable'''
         lid = db.get_current_lottory()
         progressive = db.get_lottory_jackpot_prog(lid)
-        await ctx.send("4 White Balls 1-23, 1 MEGABALL 1-11 - Ticket cost {:,} \n Match 4+1 win {:,} + {:,} progressive! \n Match 4    win {:,} \n Match 3+1 win {:,} \n Match 3    win {:,} \n Match 2+1 win {:,}\n Match 1+1 win {:,} \n Chance to win ANY prize 1:17".format(ticket_cost, payout_table[True][4], progressive, payout_table[False][4], payout_table[True][3], payout_table[False][3], payout_table[True][2], payout_table[True][1]))
+        await ctx.send("4 White Balls 1-23, 1 MEGABALL 1-11 - Ticket cost {:,} \n Match 4+1 win {:,} + {:,} progressive! \n Match 4    win {:,} \n Match 3+1 win {:,} \n Match 3    win {:,} \n Match 2+1 win {:,}\n Match 1+1 win {:,} \n Chance to win ANY prize 1:6".format(ticket_cost, payout_table[True][4], progressive, payout_table[False][4], payout_table[True][3], payout_table[False][3], payout_table[True][2], payout_table[True][1]))
 
     @commands.group(invoke_without_command=True)
     async def status(self,ctx):
