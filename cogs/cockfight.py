@@ -5,7 +5,7 @@ import asyncio
 from discord.ext import commands
 
 def get_cock_power(cock_status):
-    return (50 + cock_status) / 100
+    return (50 + cock_status) / 100.00
 
 class CockFight:
 
@@ -19,7 +19,6 @@ class CockFight:
         user_id = ctx.author.id
         balance = db.get_user_balance(user_id)
         cock_status = db.get_cock_status(user_id)
-        print("cock_status", cock_status)
         if cock_status == -1:
             await ctx.send("Your cock is not ready for battle, prepare your lil cock with $prepare_cock first.")
             return
@@ -46,7 +45,6 @@ class CockFight:
         balance = db.get_user_balance(user_id)
         cock_status = db.get_cock_status(user_id)
         cock_power = get_cock_power(cock_status)
-        print("cock_status", cock_status)
         if cock_status != -1:
             await ctx.send("Your cock is already prepared for battle, currently at {}% hardness".format(cock_power * 100))
             return
