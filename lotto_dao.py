@@ -13,7 +13,7 @@ class LottoryConnection(object):
         self.connection.close()
 
 def initialize_tables():
-    table_data = {'user':{'user_id':'INTEGER PRIMARY KEY', 'balance':'REAL DEFAULT 0', 'income': 'INTEGER DEFAULT 0', 'outflow': 'INTEGER DEFAULT O'},
+    table_data = {'user':{'user_id':'INTEGER PRIMARY KEY', 'balance':'REAL DEFAULT 0', 'income': 'INTEGER DEFAULT 0', 'outflow': 'INTEGER DEFAULT O', 'cock': 'INTEGER DEFAULT -1'},
                   'ticket':{'ticket_id':'INTEGER PRIMARY KEY', 'ticket_value':'TEXT', 'lottory_id':'INTEGER', 'user_id':'INTEGER'},
                   'lottory':{'lottory_id':'INTEGER PRIMARY KEY', 'jackpot':'INTEGER DEFAULT 0', 'income': 'INTEGER DEFAULT 0', 'outflow': 'INTEGER DEFAULT 0'},
                   }
@@ -114,7 +114,7 @@ def modify_user_balance(user_id, amount):
         curr.execute(get_balance_sql)
         current_balance = curr.fetchone()[0]
         new_balance = current_balance + amount
-        set_balance_sql = 'REPLACE INTO user (user_id, balance) VALUES ({},{});'.format(user_id, new_balance)
+        set_balance_sql = 'UPDATE user SET balance={} WHERE user_id={};'.format(new_balance, user_id)
         curr.execute(set_balance_sql)
         conn.commit()
         return new_balance
@@ -144,3 +144,21 @@ def get_user_tickets(user_id, lottory_id=None):
         for ticket in tickets:
             output.append(ticket[0])
         return output
+
+def get_cock_status(user_id=None):
+    with LottoryConnection() as conn:
+        curr = conn.cursor()
+        user_sql = '' if user_id is None else 'WHERE user_id={}'.format(user_id)
+        get_cock_sql = 'SELECT cock FROM user {} ORDER BY cock DESC;'.format(user_sql)
+        curr.execute(get_cock_sql)
+        if user_id is None:
+            return curr.fetchall()
+        else:
+            return curr.fetchone()[0]
+
+def set_cock_status(user_id, status):
+    with LottoryConnection() as conn:
+        curr = conn.cursor()
+        set_cock_sql = 'UPDATE user SET cock={} WHERE user_id={};'.format(status, user_id)
+        curr.execute(set_cock_sql)
+        conn.commit()

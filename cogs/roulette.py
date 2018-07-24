@@ -127,7 +127,7 @@ class Roulette:
             if not user.bot:
                 balance = db.get_user_balance(user.id)
                 balances.append((balance, user.name))
-        sorted(balances, key=lambda balances: balances[0])
+        balances = sorted(balances, key=lambda balances: balances[0])
         rank = 1
         output = []
         for user_balance, user_name in balances:
