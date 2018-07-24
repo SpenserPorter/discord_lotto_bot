@@ -5,7 +5,7 @@ import asyncio
 from discord.ext import commands
 
 def get_cock_power(cock_status):
-    return (50 + cock_status) / 100.00
+    return round((50 + cock_status) / 100.00,2)
 
 class CockFight:
 
