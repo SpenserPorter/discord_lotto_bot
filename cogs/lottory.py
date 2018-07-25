@@ -151,7 +151,7 @@ class Lottory:
         jackpot = payout_table[True][4] + progressive
         await ctx.send("Lottory {} is in progress, currently {:,} tickets sold, current jackpot is {:,}".format(lottory_id,num_tickets,jackpot))
 
-    @commands.group(invoke_without_command=True)
+    @commands.group(invoke_without_command=True, aliases=["bal","cash","money"])
     async def balance(self,ctx):
         '''Shows your balance and number of tickets in current drawing'''
         balance = db.get_user_balance(ctx.author.id)

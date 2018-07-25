@@ -7,8 +7,20 @@ from discord.ext import commands
 def get_cock_power(cock_status):
     return round((50 + cock_status) / 100.00,2)
 
-class CockFight:
+def build_embed(input_dict):
 
+    embed = discord.Embed(title=None,
+                      description=None,
+                      colour=input_dict['colour'])
+
+    embed.set_author(name=input_dict['author_name'])
+
+    for key, field in input_dict['fields'].items():
+        embed.add_field(name=field['name'], value=field['value'])
+
+    return embed
+
+class CockFight:
 
     def __init__(self, bot):
         self.bot = bot
@@ -34,9 +46,16 @@ class CockFight:
                 new_cock_status = cock_status + 1
                 new_balance = db.modify_user_balance(user_id, amount_won)
                 db.set_cock_status(user_id, new_cock_status)
-                await ctx.send("Your lil cock made you {:,} richer, it's now at {}% hardness".format(amount_won, get_cock_power(new_cock_status) * 100))
+                result_msg = "Your lil cock made you {:,} richer".format(amount_won)
+                hardness_msg= "Now at {}% hardness <:peen:456499857759404035>".format(get_cock_power(new_cock_status) * 100)
+                embed_dict = {'colour':discord.Colour(0x00e553), 'author_name':ctx.author.name,
+                            'fields': {1:{'name': result_msg, 'value': hardness_msg}}}
+                await ctx.send(embed=build_embed(embed_dict))
             else:
-                await ctx.send("Your cock snapped in half <:sad:455866480454533120>")
+                result_msg = "Your cock snapped in half <:sad:455866480454533120>"
+                embed_dict = {'colour':discord.Colour(0xe10531), 'author_name':ctx.author.name,
+                            'fields': {1:{'name': 'Ouch', 'value': result_msg}}}
+                await ctx.send(embed=build_embed(embed_dict))
                 db.set_cock_status(user_id, -1)
 
     @commands.group(invoke_without_command=True, aliases=["pc","gethard","buy"])
