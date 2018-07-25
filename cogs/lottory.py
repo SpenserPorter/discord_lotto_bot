@@ -163,9 +163,16 @@ class Lottory:
     async def draw(self,ctx):
         '''Start the next drawing'''
 
+
         lottory_id = db.get_current_lottory()
         progressive = db.get_lottory_jackpot_prog(lottory_id)
         total_jackpot = progressive + payout_table[True][4]
+        ticket_list = db.get_lottory_tickets(lottory_id) #List of tuples (user_id, ticket_value)
+        
+        if len(ticket_list) < 1:
+            await ctx.send("There are no tickets sold for this drawing yet!")
+            return
+
         db.add_lottory() #increment lottory to next when drawing starts
 
         await ctx.send("Drawing for lottory {} starting! Jackpot is currently {:,}".format(lottory_id,total_jackpot))
@@ -179,7 +186,7 @@ class Lottory:
                 await ctx.send("{} ball is {}".format(balls[n], winning_numbers[n]))
             await ctx.send("Winning numbers are {}".format(Ticket(winning_numbers)))
 
-        ticket_list = db.get_lottory_tickets(lottory_id) #List of tuples (user_id, ticket_value)
+
         num_tickets = len(ticket_list)
         progressive_split = []
         winner_dict = {}

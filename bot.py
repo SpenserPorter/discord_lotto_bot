@@ -107,7 +107,7 @@ class Bot(commands.Bot):
         check_rigged = message.content.lower()
         if check_rigged.find("rigged") != -1:
             await channel.send("It's not rigged bitch")
-        await self.process_commands(message)
+        await self.process_commands(message.lower())
 
 
 if __name__ == '__main__':
