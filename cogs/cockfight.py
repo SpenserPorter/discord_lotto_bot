@@ -59,7 +59,6 @@ class CockBattle:
 
     def resolve_battle(self):
         round = 0
-        results = []
         challenger = False
         challenged = False
         while challenger == challenged:
@@ -137,40 +136,44 @@ class CockFight:
         if self.cock_battle is not None:
             await ctx.send("Only one cock battle at a time u slut, wait for {} and {} to finish their battle!".format(self.cock_battle.challenger.name, self.cock_battle.challenged.name))
             return
+
+        if db.get_cock_status(ctx.author.id) == -1:
+            await ctx.send("You don't have a cock")
+            return
+
         try:
             challenged_user = match_string_to_user(self.bot, ctx, user_string)
         except:
             await ctx.send("No user found matching that name")
-        if challenged_user == ctx.author:
-            await ctx.send("Try punching yourself in the face instead")
-            return
-        if db.get_cock_status(ctx.author.id) == -1:
-            await ctx.send("You don't have a cock")
-            return
+
         if db.get_cock_status(challenged_user.id) == -1:
             await ctx.send("{} doesn't have a cock!".format(challenged_user.name))
             return
 
-        cock_battle = CockBattle(self.bot, ctx, ctx.author, challenged_user, purse=purse)
-        challenger_cock_power = get_cock_power(cock_battle.challenger_cock_status)
-        challenged_cock_power = get_cock_power(cock_battle.challenged_cock_status)
-        self.cock_battle = cock_battle
+        # if challenged_user == ctx.author:
+        #     await ctx.send("Try punching yourself in the face instead")
+        #     return
+
+
+
+        self.cock_battle = CockBattle(self.bot, ctx, ctx.author, challenged_user, purse=purse)
 
         embed_dict = {'colour':discord.Colour(0xffa500), 'author_name':"Cock Battle Challenge!",
-                    'fields': {1:{'name': self.cock_battle.challenger.name, 'value': "{:.1f}% <:peen:456499857759404035> @{:.2f}:1 odds".format(get_cock_power(self.cock_battle.challenger_cock_status)*100, 1/self.cock_battle.odds), 'inline': True},
-                               2:{'name': "VS", 'value': '-', 'inline': True},
-                               3:{'name': self.cock_battle.challenged.name, 'value': "{:.1f}% <:peen:456499857759404035> @{:.2f}:1 odds".format(get_cock_power(self.cock_battle.challenged_cock_status)*100, self.cock_battle.odds), 'inline': True},
-                               4:{'name': "```{} has 60s to accept the challenge!```".format(self.cock_battle.challenged.name), 'value': 'Use <$challenge_accepted> to accept!', 'inline': False}
-                               }
+                      'fields': {1:{'name': self.cock_battle.challenger.name, 'value': "{:.1f}% <:peen:456499857759404035> @{:.2f}:1 odds".format(get_cock_power(self.cock_battle.challenger_cock_status)*100, 1/self.cock_battle.odds), 'inline': True},
+                                 2:{'name': "VS", 'value': '-', 'inline': True},
+                                 3:{'name': self.cock_battle.challenged.name, 'value': "{:.1f}% <:peen:456499857759404035> @{:.2f}:1 odds".format(get_cock_power(self.cock_battle.challenged_cock_status)*100, self.cock_battle.odds), 'inline': True},
+                                 4:{'name': "```{} has 60s to accept the challenge!```".format(self.cock_battle.challenged.name), 'value': 'Use <$challenge_accepted> to accept!', 'inline': False}
+                                 }
                       }
+
         battle_message = await ctx.send(embed = build_embed(embed_dict))
 
         wait_cycles = 0
-        while self.cock_battle.accepted == False and wait_cycles < 12:
-            await asyncio.sleep(time_to_accept_battle//12)
+        while self.cock_battle.accepted == False and wait_cycles < 60:
+            await asyncio.sleep(time_to_accept_battle//60)
             wait_cycles += 1
-            if wait_cycles in [10, 6, 3]:
-                embed_dict['fields'][4] = {'name': "```{} has {}s to accept the challenge!```".format(self.cock_battle.challenged.name, (time_to_accept_battle/12) * (12 - wait_cycles)), 'value': 'Use <$challenge_accepted> to accept!', 'inline': False}
+            if wait_cycles in [50, 30, 15]:
+                embed_dict['fields'][4] = {'name': "```{} has {}s to accept the challenge!```".format(self.cock_battle.challenged.name, (time_to_accept_battle/60) * (60 - wait_cycles)), 'value': 'Use <$challenge_accepted> to accept!', 'inline': False}
                 await battle_message.edit(embed=build_embed(embed_dict))
 
         if self.cock_battle.accepted:
@@ -186,6 +189,12 @@ class CockFight:
                     embed_dict['fields'][4] = {'name': "```{}s until the battle!```".format((time_to_battle/12) * (12 - wait_cycles)), 'value': 'Use <$bb amount user> to raise your bets!', 'inline': False}
                     await battle_message.edit(embed=build_embed(embed_dict))
 
+            embed_dict['author_name'] = "Battle Results Below!"
+            embed_dict['colour'] = discord.Colour(0xd3d3d3)
+            embed_dict['fields'][4] = {'name': "```Battle!```", 'value': 'Results below!', 'inline': False}
+
+            await battle_message.edit(embed=build_embed(embed_dict))
+
             rounds, winner, loser = self.cock_battle.resolve_battle()
             db.modify_user_balance(winner.id, self.cock_battle.purse)
             db.set_cock_status(loser.id, -1)
@@ -193,11 +202,11 @@ class CockFight:
             if loser == self.cock_battle.challenger:
                 donated_cock_power = ((self.cock_battle.challenger_cock_status) / 2) + 1
                 embed_dict['fields'][3]['name'] = "{}:white_check_mark:".format(self.cock_battle.challenged.name)
-                db.set_cock_status(winner.id, self.cock_battle.challenged_cock_status + donated_cock_power)
             else:
                 donated_cock_power = ((self.cock_battle.challenged_cock_status) / 2) + 1
                 embed_dict['fields'][1]['name'] = "{}:white_check_mark:".format(self.cock_battle.challenger.name)
-                db.set_cock_status(winner.id, self.cock_battle.challenger_cock_status + donated_cock_power)
+
+            db.set_cock_status(winner.id, self.cock_battle.challenger_cock_status + donated_cock_power)
 
             results = []
             for user, amount_won in self.cock_battle.wagers[winner].items():
@@ -207,7 +216,8 @@ class CockFight:
             embed_dict['author_name'] = "{}s cock won the battle!".format(winner.name)
             embed_dict['colour'] = discord.Colour(0x0077be)
             embed_dict['fields'][4] = {'name': "{} cock was victorious in round {} and wins {} from the purse!".format(winner.name, rounds, self.cock_battle.purse), 'value': "{}\% is added to his cocks power from his vanquised foe".format(donated_cock_power), 'inline': False}
-            await battle_message.edit(embed=build_embed(embed_dict))
+
+            await ctx.send(embed=build_embed(embed_dict))
             self.cock_battle = None
             await ctx.send("\n".join(results))
 
