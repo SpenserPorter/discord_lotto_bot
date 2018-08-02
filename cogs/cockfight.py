@@ -141,7 +141,7 @@ class CockFight:
             challenged_user = match_string_to_user(self.bot, ctx, user_string)
         except:
             await ctx.send("No user found matching that name")
-        if challenged_user = ctx.author:
+        if challenged_user == ctx.author:
             await ctx.send("Try punching yourself in the face instead")
             return
         if db.get_cock_status(ctx.author.id) == -1:

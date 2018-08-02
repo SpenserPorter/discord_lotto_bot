@@ -60,8 +60,8 @@ class GeneralCommands:
         output = []
 
         for user_name, cock_status, user_balance in balances:
-            cock_power = "{:.1f}%".format(get_cock_power(cock_status) * 100) if cock_status is not -1 else "<:sad:455866480454533120>"
-            output.append("{}: **{}** - {:,} <:peen:456499857759404035>={}".format(rank, user_name, round(user_balance), cock_power))
+            cock_power = "{:.1f}%<:peen:456499857759404035>".format((get_cock_power(cock_status) * 100)) if cock_status is not -1 else "<:sad:455866480454533120>"
+            output.append("{}: **{}** - {:,} {}".format(rank, user_name, round(user_balance), cock_power))
             rank += 1
 
         embed_dict = {'colour':discord.Colour(0x034cc1), 'author_name':"Lotto-Bot",
