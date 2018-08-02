@@ -54,36 +54,6 @@ class Lottory:
     def __init__(self, bot):
         self.bot = bot
 
-    async def on_message(self, message):
-        '''Accepts deposits from Unbeleivaboat'''
-        channel = message.channel
-        if message.author.id == 292953664492929025: #Unbeleivaboat user.id
-            try:
-                sender_url = message.embeds[0].author.icon_url
-                description = message.embeds[0].description
-                receiver_id = int(re.findall(r'<@!(\d+)>', description)[0])
-                amount = int(re.findall(r'your .(\d{1,3}(,\d{3})*(\.\d+)?)', description)[0][0].replace(',', ''))
-                sender_id = int(re.findall(r'tars/(\d+)/', sender_url)[0])
-            except:
-                return
-            if receiver_id == 456460945074421781: #Lotto-bot user.id
-                new_balance = db.modify_user_balance(sender_id, amount)
-                sender = await self.bot.get_user_info(sender_id)
-                await channel.send("{:,} received from {}. Your balance is now {:,}".format(amount, sender.name, new_balance))
-
-    @commands.group(invoke_without_command=True, hidden=True)
-    async def money_please(self, ctx, amount: int):
-        '''Adds amount to all users balance'''
-        if ctx.author.id != 154415714411741185: #My user.id
-            await ctx.send("You're not my real dad bitch!")
-            return
-        user_id_list = db.get_user() #Returns a list of all users
-        for user_id in user_id_list:
-            user = await self.bot.get_user_info(user_id[0])
-            if not user.bot:
-                new_balance = db.modify_user_balance(user_id[0], amount)
-                await ctx.send('Added {} to {}\'s balance. New balance is {}'.format(amount, user.name, new_balance))
-
     @commands.group(invoke_without_command=True)
     async def tickets(self, ctx, lottory_id=None):
         """
@@ -151,33 +121,24 @@ class Lottory:
         jackpot = payout_table[True][4] + progressive
         await ctx.send("Lottory {} is in progress, currently {:,} tickets sold, current jackpot is {:,}".format(lottory_id,num_tickets,jackpot))
 
-    @commands.group(invoke_without_command=True, aliases=["bal","cash","money"])
-    async def balance(self,ctx):
-        '''Shows your balance and number of tickets in current drawing'''
-        balance = db.get_user_balance(ctx.author.id)
-        lottory_id = db.get_current_lottory()
-        ticket_list = db.get_user_tickets(ctx.author.id,lottory_id)
-        await ctx.send("{} balance is {:,}. You have {} tickets in the next drawing".format(ctx.author.name, round(balance,2), len(ticket_list)))
-
     @commands.group(invoke_without_command=True)
     async def draw(self,ctx):
         '''Start the next drawing'''
-
 
         lottory_id = db.get_current_lottory()
         progressive = db.get_lottory_jackpot_prog(lottory_id)
         total_jackpot = progressive + payout_table[True][4]
         ticket_list = db.get_lottory_tickets(lottory_id) #List of tuples (user_id, ticket_value)
-        
-        if len(ticket_list) < 1:
+
+        if len(ticket_list) < 1: #Verify there is at least 1 ticket sold before allowing drawing
             await ctx.send("There are no tickets sold for this drawing yet!")
             return
 
-        db.add_lottory() #increment lottory to next when drawing starts
+        db.add_lottory() #increment current when drawing starts
 
         await ctx.send("Drawing for lottory {} starting! Jackpot is currently {:,}".format(lottory_id,total_jackpot))
 
-        winning_numbers = quickpick()[0] #Choose winning number_of_tickets
+        winning_numbers = quickpick()[0] #Choose winning numbers
         balls = ['First', 'Second', 'Third', 'Fourth', 'MEGA']
 
         async with ctx.typing():
@@ -336,7 +297,7 @@ class Lottory:
         new_balance = db.modify_user_balance(ctx.author.id, -1 * ticket_cost)
         db.modify_lottory_jackpot_prog(lottory_id, progressive_add)
         new_progressive = db.get_lottory_jackpot_prog(lottory_id) + payout_table[True][4]
-        await ctx.send("{} purchased ticket {}, your balance is now {}. The progressive jackpot is now {}.".format(ctx.author.name, Ticket(ticket), new_balance, new_progressive))
+        await ctx.send("{} purchased ticket {}, your balance is now {:,}. The progressive jackpot is now {:,}.".format(ctx.author.name, Ticket(ticket), new_balance, new_progressive))
 
     @buy_ticket.command(aliases=['quickpick'])
     async def qp(self, ctx, number_of_tickets=1):
@@ -351,21 +312,26 @@ class Lottory:
             return
         else:
             async with ctx.typing():
+
                 ticket_list = quickpick(number_of_tickets)
                 progressive_add = number_of_tickets * ticket_cost * .1
                 db.add_ticket_to_user(ticket_list, lottory_id, ctx.author.id)
                 new_balance = db.modify_user_balance(ctx.author.id, -1 * total_cost)
                 db.modify_lottory_jackpot_prog(lottory_id, progressive_add)
                 new_progressive = db.get_lottory_jackpot_prog(lottory_id)
-                ticket_obj_list = list(map(lambda x: Ticket(x), ticket_list))
+                ticket_obj_list = list(map(lambda x: Ticket(x), ticket_list)) #Convert list of tickets to Ticket objects
+
                 if len(ticket_list) <= 5:
                     for ticket in ticket_list:
                         await ctx.send('Quickpick ticket {} purchased by {}, good luck!'.format(Ticket(ticket), ctx.author.name))
+
                 if number_of_tickets > 500:
                     await ctx.author.send("You bought {} tickets. I'm not going to send you all of them.".format(number_of_tickets))
+
                 else:
                     for n in range(0, len(ticket_list), 50):
                         await ctx.author.send("Lottory {} Quickpick tickets {}".format(lottory_id, ticket_list[n:n+50]))
+
                 await ctx.send("{} spent {:,} on {:,} tickets, new balance is {:,}. The jackpot is now {:,}".format(ctx.author.name, total_cost, number_of_tickets, round(new_balance,2), payout_table[True][4]+new_progressive))
 
 def setup(bot):

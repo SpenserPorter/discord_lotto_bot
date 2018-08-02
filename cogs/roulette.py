@@ -60,7 +60,7 @@ class RouletteGame:
                     payout += 36 * wager.amount
             new_balance = db.modify_user_balance(user_id, payout)
             user = await self.bot.get_user_info(user_id)
-            await self.ctx.send("{} won {}, new balance is {}".format(user.name, payout, new_balance))
+            await self.ctx.send("{} won {:,}, new balance is {:,}".format(user.name, payout, new_balance))
 
 class Roulette:
 
@@ -99,11 +99,11 @@ class Roulette:
         if self.game is not None:
             await self.game.add_wagers(user_id, amount, spaces)
             output_brackets = ["{}"] * num_bets
-            output_string = "{} bet {} on {}".format(ctx.author, amount, ', '.join(output_brackets))
+            output_string = "{} bet {:,} on {}".format(ctx.author, amount, ', '.join(output_brackets))
             await ctx.send(output_string.format(*spaces))
         else:
             output_brackets = ["{}"] * num_bets
-            output_string = "{} bet {} on {}".format(ctx.author, amount, ', '.join(output_brackets))
+            output_string = "{} bet {:,} on {}".format(ctx.author, amount, ', '.join(output_brackets))
             await ctx.send(output_string.format(*spaces))
             self.game = RouletteGame(self.bot, ctx)
             await self.game.add_wagers(user_id, amount, spaces)
@@ -116,25 +116,6 @@ class Roulette:
                 await asyncio.sleep(10)
                 await self.game.resolve()
             self.game = None
-
-    @commands.group(invoke_without_command=True, aliases=["lb"])
-    async def leaderboard(self,ctx):
-        '''Shows your balance and number of tickets in current drawing'''
-        user_list = db.get_user()
-        balances = []
-        for user_id in user_list:
-            user = await self.bot.get_user_info(user_id[0])
-            if not user.bot:
-                balance = db.get_user_balance(user.id)
-                balances.append((balance, user.name))
-        balances = sorted(balances, key=lambda balances: balances[0], reverse=True)
-        rank = 1
-        output = []
-        for user_balance, user_name in balances:
-            output.append("{}: {} - {:,}".format(rank, user_name, user_balance))
-            rank += 1
-        await ctx.send("{}".format("\n".join(output)))
-
 
 def setup(bot):
     bot.add_cog(Roulette(bot))

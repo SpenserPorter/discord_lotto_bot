@@ -17,14 +17,18 @@ def initialize_tables():
                   'ticket':{'ticket_id':'INTEGER PRIMARY KEY', 'ticket_value':'TEXT', 'lottory_id':'INTEGER', 'user_id':'INTEGER'},
                   'lottory':{'lottory_id':'INTEGER PRIMARY KEY', 'jackpot':'INTEGER DEFAULT 0', 'income': 'INTEGER DEFAULT 0', 'outflow': 'INTEGER DEFAULT 0'},
                   }
+
     with LottoryConnection() as conn:
         curr = conn.cursor()
         for table_name, column_data in table_data.items():
             columns = []
+
             for column_name, column_type in column_data.items():
                 columns.append('{cn} {ct}'.format(cn=column_name, ct=column_type))
+
             column_sql = '({})'.format(', '.join(columns))
-            sql = 'CREATE TABLE IF NOT EXISTS {tn} {ts};'.format(tn= table_name, ts=column_sql)
+            sql = 'CREATE TABLE IF NOT EXISTS {tn} {ts};'.format(tn=table_name, ts=column_sql)
+
             curr.execute(sql)
         conn.commit()
 
@@ -113,7 +117,7 @@ def modify_user_balance(user_id, amount):
         get_balance_sql = 'SELECT balance FROM user WHERE user_id = {};'.format(user_id)
         curr.execute(get_balance_sql)
         current_balance = curr.fetchone()[0]
-        new_balance = current_balance + amount
+        new_balance = current_balance + int(round(amount))
         set_balance_sql = 'UPDATE user SET balance={} WHERE user_id={};'.format(new_balance, user_id)
         curr.execute(set_balance_sql)
         conn.commit()
