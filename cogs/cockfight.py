@@ -150,12 +150,10 @@ class CockFight:
             await ctx.send("{} doesn't have a cock!".format(challenged_user.name))
             return
 
-        # if challenged_user == ctx.author:
-        #     await ctx.send("Try punching yourself in the face instead")
-        #     return
-
-
-
+        if challenged_user == ctx.author:
+            await ctx.send("Try punching yourself in the face instead")
+            return
+            
         self.cock_battle = CockBattle(self.bot, ctx, ctx.author, challenged_user, purse=purse)
 
         embed_dict = {'colour':discord.Colour(0xffa500), 'author_name':"Cock Battle Challenge!",
