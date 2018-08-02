@@ -56,13 +56,13 @@ class GeneralCommands:
                 cock_status = db.get_cock_status(user.id)
                 balances.append((user.name, cock_status, balance))
 
-        sorted_balances = sorted(balances, key=lambda balances: balances[0], reverse=True)
+        sorted_balances = sorted(balances, key=lambda balances: balances[2], reverse=True)
         rank = 1
         output = []
 
         for user_name, cock_status, user_balance in sorted_balances:
-            cock_power = "{:.1f}%<:peen:456499857759404035>".format((get_cock_power(cock_status) * 100)) if cock_status is not -1 else "<:sad:455866480454533120>"
-            output.append("{}: **{}** - {:,} {}".format(rank, user_name, round(user_balance), cock_power))
+            cock_power = "{:.1f}% <:peen:456499857759404035>".format((get_cock_power(cock_status) * 100)) if cock_status is not -1 else "<:sad:455866480454533120>"
+            output.append("{}: **{}** - {:,} - {}".format(rank, user_name, round(user_balance), cock_power))
             rank += 1
 
         embed_dict = {'colour':discord.Colour(0x034cc1), 'author_name':"Lotto-Bot",
