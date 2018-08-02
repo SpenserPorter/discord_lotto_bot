@@ -34,7 +34,7 @@ def build_embed(embed_input_dict):
     embed.set_author(name=embed_input_dict['author_name'])
 
     for key, field in embed_input_dict['fields'].items():
-        embed.add_field(name=field['name'], value=field['value'], inline=field['inline'])
+        embed.add_field(name=field['name'], value=field['value'], inline=field['inline'] if 'inline' in field else False)
     return embed
 
 class CockBattle:
@@ -157,9 +157,9 @@ class CockFight:
         self.cock_battle = cock_battle
 
         embed_dict = {'colour':discord.Colour(0xffa500), 'author_name':"Cock Battle Challenge!",
-                    'fields': {1:{'name': self.cock_battle.challenger.name, 'value': "{:.1f}% <:peen:456499857759404035> @{:.1f}:1 odds".format(get_cock_power(self.cock_battle.challenger_cock_status)*100, round(1/self.cock_battle.odds,2)), 'inline': True},
+                    'fields': {1:{'name': self.cock_battle.challenger.name, 'value': "{:.1f}% <:peen:456499857759404035> @{:.2f}:1 odds".format(get_cock_power(self.cock_battle.challenger_cock_status)*100, 1/self.cock_battle.odds), 'inline': True},
                                2:{'name': "VS", 'value': '-', 'inline': True},
-                               3:{'name': self.cock_battle.challenged.name, 'value': "{:.1f}% <:peen:456499857759404035> @{:.1f}:1 odds".format(get_cock_power(self.cock_battle.challenged_cock_status)*100, round(self.cock_battle.odds,2)), 'inline': True},
+                               3:{'name': self.cock_battle.challenged.name, 'value': "{:.1f}% <:peen:456499857759404035> @{:.2f}:1 odds".format(get_cock_power(self.cock_battle.challenged_cock_status)*100, self.cock_battle.odds), 'inline': True},
                                4:{'name': "```{} has 60s to accept the challenge!```".format(self.cock_battle.challenged.name), 'value': 'Use <$challenge_accepted> to accept!', 'inline': False}
                                }
                       }
