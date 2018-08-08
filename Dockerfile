@@ -1,5 +1,7 @@
 FROM python:3.6.5
 
+ARG LOTTO_BOT_TOKEN
+
 WORKDIR usr/src/app
 
 COPY requirements.txt ./
