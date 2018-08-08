@@ -15,7 +15,7 @@ def convert_username(ctx, user_name):
 
 def match_string_to_user(bot, ctx, string_to_match):
     member_list = bot.get_all_members()
-    user_name, matching = fwp.extractOne(string_to_match, [(i.display_name if i.display_name else i.name) for i in member_list])
+    user_name, matching = fwp.extractOne(string_to_match, [(i.nick if i.nick else i.name) for i in member_list])
     if matching >= 50:
         user = convert_username(ctx, user_name)
         return user
@@ -153,7 +153,7 @@ class CockFight:
         if challenged_user == ctx.author:
             await ctx.send("Try punching yourself in the face instead")
             return
-            
+
         self.cock_battle = CockBattle(self.bot, ctx, ctx.author, challenged_user, purse=purse)
 
         embed_dict = {'colour':discord.Colour(0xffa500), 'author_name':"Cock Battle Challenge!",

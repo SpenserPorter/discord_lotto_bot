@@ -9,6 +9,4 @@ RUN pip install -U git+https://github.com/Rapptz/discord.py@rewrite#egg=discord.
 
 COPY . .
 
-ENV LOTTO_BOT_TOKEN NDU2NDYwOTQ1MDc0NDIxNzgx.DgK4Dg.G4Tm0ZU-MgQ4ESMP_rmI4SBNvFY
-
 CMD [ "python", "./bot.py" ]

@@ -13,6 +13,21 @@ payout_table = {True:{0:0*ticket_cost, 1:3*ticket_cost, 2:10*ticket_cost, 3:150*
 
 numbers = [x for x in range(1,24)]
 
+def build_embed(embed_input_dict):
+
+    embed = discord.Embed(title=None,
+                      description=None,
+                      colour=embed_input_dict['colour'])
+
+    embed.set_author(name=embed_input_dict['author_name'])
+
+    try:
+        for key, field in embed_input_dict['fields'].items():
+            embed.add_field(name=field['name'], value=field['value'], inline=field['inline'] if 'inline' in field else False)
+    except:
+        pass
+    return embed
+
 class Ticket(object):
     __slots__ = ('numbers')
 
@@ -135,18 +150,22 @@ class Lottory:
             return
 
         db.add_lottory() #increment current when drawing starts
-
-        await ctx.send("Drawing for lottory {} starting! Jackpot is currently {:,}".format(lottory_id,total_jackpot))
-
         winning_numbers = quickpick()[0] #Choose winning numbers
-        balls = ['First', 'Second', 'Third', 'Fourth', 'MEGA']
+        balls = {0:'First', 1:'Second', 2:'Third', 3:'Fourth', 4:'MEGA'}
+        embed_dict = {'colour':discord.Colour(0x006400), 'author_name':"Drawing for lottory {}! Jackpot is currently {:,}".format(lottory_id,total_jackpot),
+                      'fields': {}
+                      }
+        lottory_message = await ctx.send(embed=build_embed(embed_dict))
 
         async with ctx.typing():
-            for n in range(5):
-                await asyncio.sleep(1)
-                await ctx.send("{} ball is {}".format(balls[n], winning_numbers[n]))
-            await ctx.send("Winning numbers are {}".format(Ticket(winning_numbers)))
-
+            winning_ticket_display = []
+            for ball_number, ball_name in balls.items():
+                await asyncio.sleep(3)
+                winning_ticket_display.append(str(winning_numbers[ball_number]))
+                embed_dict['fields'][1] = {'name': "{} Ball".format(ball_name), 'value': winning_numbers[ball_number], 'inline': True}
+                winning_numbers_value = "-".join(winning_ticket_display) if len(winning_ticket_display) < 5 else Ticket(winning_numbers)
+                embed_dict['fields'][2] = {'name': 'Winning Numbers' , 'value': winning_numbers_value, 'inline': True}
+                await lottory_message.edit(embed=build_embed(embed_dict))
 
         num_tickets = len(ticket_list)
         progressive_split = []
@@ -220,11 +239,12 @@ class Lottory:
                 new_user_balance=result[1]
                 winning_tickets=result[2]
                 user = await self.bot.get_user_info(user_id)
-                await ctx.send("{} won a total of {:,} on {:,} winning tickers!".format(user.name, balance_modifier, len(winning_tickets)))
+                embed_dict['fields'][user_id] = {'name': user.name, 'value': "Won a total of {:,} on {:,} winning tickers!".format(balance_modifier, len(winning_tickets)), 'inline': False}
                 await user.send("Lottory {} Results: You won {:,}. Your new balance is {:,}.".format(lottory_id, balance_modifier, new_user_balance))
                 if len(winning_tickets) < 100:
                     for n in range(0, len(winning_tickets), 50):
                         await user.send("Your winnings tickets for Lottory {}: Winning Numbers:{} Your winners: {}".format(lottory_id, winning_numbers, winning_tickets[n:n+50]))
+                await lottory_message.edit(embed=build_embed(embed_dict))
 
             for user_id, list_of_losing_tickets in loser_dict.items():
                 losers = []
@@ -233,15 +253,17 @@ class Lottory:
                     losers.append(ticket_value)
                 user = await self.bot.get_user_info(user_id)
                 for n in range(0,len(losers),50):
-                    user.send("Way to lose, loser. Your losing tickets for lottory {}: {}".format(lottory_id, losers[n:n+50]))
+                    await user.send("Way to lose, loser. Your losing tickets for lottory {}: {}".format(lottory_id, losers[n:n+50]))
 
         income = ticket_cost * num_tickets
         payout_ratio = 100 * (total_payout - income) / income
 
         db.update_lottory_stats(lottory_id, income, total_payout)
-        await ctx.send("Lottory {} ended! {:,} tickets were sold for {:,}, {:,} was paid out for a payout ratio of {}%".format(lottory_id, num_tickets, income, round(total_payout,2), round(payout_ratio, 2)))
+        embed_dict['author_name'] = "Lottory {} ended!".format(lottory_id)
+        embed_dict['fields'][0] = {"name": "{:,} tickets were sold for {:,}".format(num_tickets, income), 'value':"{:,} was paid out for a payout ratio of {}%".format(round(total_payout,2), round(payout_ratio, 2))}
+        await lottory_message.edit(embed=build_embed(embed_dict))
+
         if len(progressive_split) == 0:
-            await ctx.send("No jackpot winner!")
             lottory_id = db.get_current_lottory() #Add progressive to next lottory
             db.modify_lottory_jackpot_prog(lottory_id, progressive)
         else:
@@ -272,12 +294,14 @@ class Lottory:
         """
         lottory_id = db.get_current_lottory()
         user_balance = db.get_user_balance(ctx.author.id)
-        ticket = [first,second,third,fourth,mega]
+        ticket = [first, second, third, fourth,mega]
         ticket_print = Ticket(ticket)
 
         if user_balance < ticket_cost:
             await ctx.send("That would cost {:,}, your balance is {:,}. Broke ass bitch".format(ticket_cost, user_balance))
             return
+
+        #Validate ticket entry
         for number in ticket[:4]:
             if number not in numbers:
                 await ctx.send("{} is not a valid ticket, first 4 numbers must be between 1-23".format(ticket))
@@ -292,11 +316,13 @@ class Lottory:
             if ticket[i] in ticket[i+1:4]:
                 await ctx.send("{} is not a valid ticket, first four numbers must be unique".format(ticket_print))
                 return
+
         progressive_add = ticket_cost * .1
         db.add_ticket_to_user([ticket], lottory_id, ctx.author.id)
         new_balance = db.modify_user_balance(ctx.author.id, -1 * ticket_cost)
         db.modify_lottory_jackpot_prog(lottory_id, progressive_add)
         new_progressive = db.get_lottory_jackpot_prog(lottory_id) + payout_table[True][4]
+
         await ctx.send("{} purchased ticket {}, your balance is now {:,}. The progressive jackpot is now {:,}.".format(ctx.author.name, Ticket(ticket), new_balance, new_progressive))
 
     @buy_ticket.command(aliases=['quickpick'])
