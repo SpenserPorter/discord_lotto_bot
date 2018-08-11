@@ -200,11 +200,11 @@ class CockFight:
             if loser == self.cock_battle.challenger:
                 donated_cock_power = ((self.cock_battle.challenger_cock_status) / 2) + 1
                 embed_dict['fields'][3]['name'] = "{}:white_check_mark:".format(self.cock_battle.challenged.name)
+                db.set_cock_status(winner.id, self.cock_battle.challenged_cock_status + donated_cock_power)
             else:
                 donated_cock_power = ((self.cock_battle.challenged_cock_status) / 2) + 1
                 embed_dict['fields'][1]['name'] = "{}:white_check_mark:".format(self.cock_battle.challenger.name)
-
-            db.set_cock_status(winner.id, self.cock_battle.challenger_cock_status + donated_cock_power)
+                db.set_cock_status(winner.id, self.cock_battle.challenger_cock_status + donated_cock_power)
 
             results = []
             for user, amount_won in self.cock_battle.wagers[winner].items():

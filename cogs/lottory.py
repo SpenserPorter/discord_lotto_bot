@@ -124,7 +124,8 @@ class Lottory:
         '''Displays the paytable'''
         lid = db.get_current_lottory()
         progressive = db.get_lottory_jackpot_prog(lid)
-        await ctx.send("4 White Balls 1-23, 1 MEGABALL 1-11 - Ticket cost {:,} \n Match 4+1 win {:,} + {:,} progressive! \n Match 4    win {:,} \n Match 3+1 win {:,} \n Match 3    win {:,} \n Match 2+1 win {:,}\n Match 1+1 win {:,} \n Chance to win ANY prize 1:6".format(ticket_cost, payout_table[True][4], progressive, payout_table[False][4], payout_table[True][3], payout_table[False][3], payout_table[True][2], payout_table[True][1]))
+        await ctx.send("4 Unordered Balls <1-23>, 1 MEGABALL <1-11> - Ticket cost {:,} \n Match 4+1 win {:,} + {:,} progressive!\nMatch 4     win {:,}\nMatch 3+1 win {:,}\nMatch 3     win {:,}\nMatch 2+1 win {:,}\nMatch 2+0 win {:,}\nMatch 1+1 win {:,}\nChance to win ANY prize 1:6".format(ticket_cost,
+        payout_table[True][4], progressive, payout_table[False][4], payout_table[True][3], payout_table[False][3], payout_table[True][2], payout_table[False][2], payout_table[True][1]))
 
     @commands.group(invoke_without_command=True)
     async def status(self,ctx):
@@ -348,8 +349,10 @@ class Lottory:
                 ticket_obj_list = list(map(lambda x: Ticket(x), ticket_list)) #Convert list of tickets to Ticket objects
 
                 if len(ticket_list) <= 5:
+                    output_line_list = []
                     for ticket in ticket_list:
-                        await ctx.send('Quickpick ticket {} purchased by {}, good luck!'.format(Ticket(ticket), ctx.author.name))
+                        output_line_list.append('Quickpick ticket {} purchased by {}, good luck!'.format(Ticket(ticket), ctx.author.name))
+                    await ctx.send("\n".join(output_line_list))
 
                 if number_of_tickets > 500:
                     await ctx.author.send("You bought {} tickets. I'm not going to send you all of them.".format(number_of_tickets))
