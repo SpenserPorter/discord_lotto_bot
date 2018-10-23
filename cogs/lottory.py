@@ -247,15 +247,6 @@ class Lottory:
                         await user.send("Your winnings tickets for Lottory {}: Winning Numbers:{} Your winners: {}".format(lottory_id, winning_numbers, winning_tickets[n:n+50]))
                 await lottory_message.edit(embed=build_embed(embed_dict))
 
-            for user_id, list_of_losing_tickets in loser_dict.items():
-                losers = []
-                for ticket_tuple in list_of_losing_tickets:
-                    ticket_value = Ticket(ticket_tuple[0])
-                    losers.append(ticket_value)
-                user = await self.bot.get_user_info(user_id)
-                for n in range(0,len(losers),50):
-                    await user.send("Way to lose, loser. Your losing tickets for lottory {}: {}".format(lottory_id, losers[n:n+50]))
-
         income = ticket_cost * num_tickets
         payout_ratio = 100 * (total_payout - income) / income
 
