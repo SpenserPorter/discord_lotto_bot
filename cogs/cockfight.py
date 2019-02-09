@@ -213,7 +213,7 @@ class CockFight:
 
             embed_dict['author_name'] = "{}s cock won the battle!".format(winner.name)
             embed_dict['colour'] = discord.Colour(0x0077be)
-            embed_dict['fields'][4] = {'name': "{} cock was victorious in round {} and wins {} from the purse!".format(winner.name, rounds, self.cock_battle.purse), 'value': "{}\% is added to his cocks power from his vanquised foe".format(donated_cock_power), 'inline': False}
+            embed_dict['fields'][4] = {'name': "{} cock was victorious in round {} and wins {} from the purse!".format(winner.name, rounds, self.cock_battle.purse), 'value': "{}\% is added to his cocks power from his vanquished foe".format(donated_cock_power), 'inline': False}
 
             await ctx.send(embed=build_embed(embed_dict))
             self.cock_battle = None

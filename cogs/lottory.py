@@ -236,9 +236,9 @@ class Lottory:
 
             for user_id, result in results.items():
                 jackpot_balance_modifier = jackpot_results[user_id][0] if user_id in jackpot_results else 0
-                balance_modifier= result[0] + jackpot_balance_modifier
-                new_user_balance=result[1]
-                winning_tickets=result[2]
+                balance_modifier = result[0] + jackpot_balance_modifier
+                new_user_balance = result[1]
+                winning_tickets = result[2]
                 user = await self.bot.get_user_info(user_id)
                 embed_dict['fields'][user_id] = {'name': user.name, 'value': "Won a total of {:,} on {:,} winning tickers!".format(balance_modifier, len(winning_tickets)), 'inline': False}
                 await user.send("Lottory {} Results: You won {:,}. Your new balance is {:,}.".format(lottory_id, balance_modifier, new_user_balance))
@@ -249,10 +249,9 @@ class Lottory:
 
         income = ticket_cost * num_tickets
         payout_ratio = 100 * (total_payout - income) / income
-
         db.update_lottory_stats(lottory_id, income, total_payout)
         embed_dict['author_name'] = "Lottory {} ended!".format(lottory_id)
-        embed_dict['fields'][0] = {"name": "{:,} tickets were sold for {:,}".format(num_tickets, income), 'value':"{:,} was paid out for a payout ratio of {}%".format(round(total_payout,2), round(payout_ratio, 2))}
+        embed_dict['fields'][0] = {"name": "{:,} tickets were sold for {:,}".format(num_tickets, income), 'value':"{:,} was paid out for a payout ratio of {}%".format(round(total_payout, 2), round(payout_ratio, 2))}
         await lottory_message.edit(embed=build_embed(embed_dict))
 
         if len(progressive_split) == 0:
@@ -296,7 +295,7 @@ class Lottory:
         #Validate ticket entry
         for number in ticket[:4]:
             if number not in numbers:
-                await ctx.send("{} is not a valid ticket, first 4 numbers must be between 1-23".format(ticket))
+                await ctx.send("{} is not a valid ticket, first 4 numbers must be between {}-{}}".format(ticket, numbers[0], numbers[-1]))
                 return
         if ticket[4] not in range(1,12):
             await ctx.send("{} is not a valid ticket, megaball must be between 1-11".format(ticket))
