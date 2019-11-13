@@ -3,7 +3,7 @@ version: "3.3"
 services:
 
   back_end:
-    image: sporter14/discord_lotto_bot:latest
+    image: sporter14/lottobot:latest
     ports:
       - "80:3000"
 
