@@ -17,7 +17,8 @@ def build_embed(embed_input_dict):
 
     embed = discord.Embed(title=None,
                       description=None,
-                      colour=embed_input_dict['colour'])
+                      colour=embed_input_dict['colour']
+                      )
 
     embed.set_author(name=embed_input_dict['author_name'])
 

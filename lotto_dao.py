@@ -13,9 +13,22 @@ class LottoryConnection(object):
         self.connection.close()
 
 def initialize_tables():
-    table_data = {'user':{'user_id':'INTEGER PRIMARY KEY', 'balance':'REAL DEFAULT 0', 'income': 'INTEGER DEFAULT 0', 'outflow': 'INTEGER DEFAULT O', 'cock': 'INTEGER DEFAULT -1'},
-                  'ticket':{'ticket_id':'INTEGER PRIMARY KEY', 'ticket_value':'TEXT', 'lottory_id':'INTEGER', 'user_id':'INTEGER'},
-                  'lottory':{'lottory_id':'INTEGER PRIMARY KEY', 'jackpot':'INTEGER DEFAULT 0', 'income': 'INTEGER DEFAULT 0', 'outflow': 'INTEGER DEFAULT 0'},
+    table_data = {'user':{'user_id':'INTEGER PRIMARY KEY',
+                        'balance':'REAL DEFAULT 0',
+                        'income': 'INTEGER DEFAULT 0',
+                        'outflow': 'INTEGER DEFAULT O',
+                        'cock': 'INTEGER DEFAULT -1'
+                        },
+                  'ticket':{'ticket_id':'INTEGER PRIMARY KEY',
+                        'ticket_value':'TEXT',
+                        'lottory_id':'INTEGER',
+                        'user_id':'INTEGER'
+                        },
+                  'lottory':{'lottory_id':'INTEGER PRIMARY KEY',
+                        'jackpot':'INTEGER DEFAULT 0',
+                        'income': 'INTEGER DEFAULT 0',
+                        'outflow': 'INTEGER DEFAULT 0'
+                        },
                   }
 
     with LottoryConnection() as conn:
