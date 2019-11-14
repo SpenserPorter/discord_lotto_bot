@@ -37,7 +37,7 @@ def build_embed(embed_input_dict):
         embed.add_field(name=field['name'], value=field['value'], inline=field['inline'] if 'inline' in field else False)
     return embed
 
-class CockBattle:
+class CockBattle():
 
     def __init__(self, bot, ctx, challenger, challenged, purse):
         self.bot = bot
@@ -78,7 +78,7 @@ class CockBattle:
         odds = (challenger_power * (1 - challenged_power)) / (challenged_power * (1 - challenger_power))
         return odds
 
-class CockFight:
+class CockFight(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot

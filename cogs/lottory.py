@@ -65,7 +65,7 @@ def add_ticket_to_dict(result_dict, user_id, ticket_value, payout):
 def determine_payout(mega, match):
     return payout_table[mega][match]
 
-class Lottory:
+class Lottory(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot

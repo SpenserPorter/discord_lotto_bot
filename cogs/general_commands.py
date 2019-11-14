@@ -19,7 +19,7 @@ def build_embed(embed_input_dict):
         embed.add_field(name=field['name'], value=field['value'])
     return embed
 
-class GeneralCommands:
+class GeneralCommands(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot

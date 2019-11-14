@@ -33,7 +33,7 @@ class Wager:
         self.amount = amount
         self.space = space
 
-class RouletteGame:
+class RouletteGame():
 
     def __init__(self, bot, ctx):
         self.ctx = ctx
@@ -62,7 +62,7 @@ class RouletteGame:
             user = await self.bot.get_user_info(user_id)
             await self.ctx.send("{} won {:,}, new balance is {:,}".format(user.name, payout, new_balance))
 
-class Roulette:
+class Roulette(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot

@@ -15,8 +15,6 @@ async def run():
     """
     bot = Bot(description='It\'s the lottory! (It\'s not rigged) \n 4 Unique Numbers 1-23, order doesn\'t matter. 1 MEGABALL 1-11 \n !give-money lotto-bot AMOUNT to deposit!')
     token = os.getenv('LOTTO_BOT_TOKEN')
-    print("Token=", token)
-
     try:
         await bot.start(token)
     except KeyboardInterrupt:
