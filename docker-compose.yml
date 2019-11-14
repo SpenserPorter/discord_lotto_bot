@@ -1,15 +1,9 @@
 version: "3.3"
 
 services:
-
   back_end:
     image: sporter14/lottobot:latest
     ports:
       - "80:3000"
-    build:
-        context: .
-        args:
-            LOTTO_BOT_TOKEN=${LOTTO_BOT_TOKEN}
-
-volumes:
-  db:
+    environment:
+      - LOTTO_BOT_TOKEN=$LOTTO_BOT_TOKEN
