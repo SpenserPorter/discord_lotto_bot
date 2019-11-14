@@ -6,6 +6,10 @@ services:
     image: sporter14/lottobot:latest
     ports:
       - "80:3000"
+    build:
+        context: .
+        args:
+            LOTTO_BOT_TOKEN=${LOTTO_BOT_TOKEN}
 
 volumes:
   db:
