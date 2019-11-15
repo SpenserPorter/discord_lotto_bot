@@ -24,22 +24,25 @@ class GeneralCommands(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
+    @commands.Cog.listener()
     async def on_message(self, message):
         '''Accepts deposits from Unbeleivaboat'''
         channel = message.channel
-        if message.author.id == 292953664492929025: #Unbeleivaboat user.id
+        if message.author.id == 292953664492929025: #Unbeleivaboat user.id!
             try:
                 sender_url = message.embeds[0].author.icon_url
                 description = message.embeds[0].description
                 receiver_id = int(re.findall(r'<@!(\d+)>', description)[0])
                 amount = int(re.findall(r'your .(\d{1,3}(,\d{3})*(\.\d+)?)', description)[0][0].replace(',', ''))
                 sender_id = int(re.findall(r'tars/(\d+)/', sender_url)[0])
+                print(amount, sender_id, "criteria matched")
             except:
                 return
             if receiver_id == 456460945074421781: #Lotto-bot user.id
                 new_balance = db.modify_user_balance(sender_id, amount)
                 sender = await self.bot.fetch_user(sender_id)
                 await channel.send("{:,} received from {}. Your balance is now {:,}".format(amount, sender.name, new_balance))
+        pass
 
     @commands.group(invoke_without_command=True, aliases=["lb"])
     async def leaderboard(self,ctx):
