@@ -117,7 +117,7 @@ class Lottory(commands.Cog):
             amount = balance
         new_balance = db.modify_user_balance(ctx.author.id, -1 * amount)
         await ctx.send("{} withdrew {:,}. Your new balance is {:,}. An admin will credit your RiggBott acount soon!".format(ctx.author.name, amount, new_balance))
-        admin = await self.bot.get_user_info(154415714411741185)
+        admin = await self.bot.fetch_user(154415714411741185)
         await admin.send("Please run --> !add-money cash {} {}  <--".format(ctx.author.name, amount))
 
     @commands.group(invoke_without_command=True, aliases=['what'])
@@ -231,7 +231,7 @@ class Lottory(commands.Cog):
                     new_user_balance = result[1]
                     ticket_values = result[2] if len(result[2]) <= 10 else len(result[2])
                     progressive_split = result[3]
-                    user = await self.bot.get_user_info(user_id)
+                    user = await self.bot.fetch_user(user_id)
                     await ctx.send('{} {} the Jackpot! Payout {:,}, your share of the progressive is {:,}! with {} tickets!!'.format(user.name, split_won, round(jackpot_payout,2), round(progressive_split,2), ticket_values))
                     await user.send('You {} the Jackpot for lottory {} with ticket {}! {:,} has been deposited into your account. Your new balance is {}.'.format(split_won, lottory_id, ticket_value, round(jackpot_payout,2), new_user_balance))
 
@@ -240,7 +240,7 @@ class Lottory(commands.Cog):
                 balance_modifier = result[0] + jackpot_balance_modifier
                 new_user_balance = result[1]
                 winning_tickets = result[2]
-                user = await self.bot.get_user_info(user_id)
+                user = await self.bot.fetch_user(user_id)
                 embed_dict['fields'][user_id] = {'name': user.name, 'value': "Won a total of {:,} on {:,} winning tickers!".format(balance_modifier, len(winning_tickets)), 'inline': False}
                 await user.send("Lottory {} Results: You won {:,}. Your new balance is {:,}.".format(lottory_id, balance_modifier, new_user_balance))
                 if len(winning_tickets) < 100:

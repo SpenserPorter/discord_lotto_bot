@@ -38,7 +38,7 @@ class GeneralCommands(commands.Cog):
                 return
             if receiver_id == 456460945074421781: #Lotto-bot user.id
                 new_balance = db.modify_user_balance(sender_id, amount)
-                sender = await self.bot.get_user_info(sender_id)
+                sender = await self.bot.fetch_user(sender_id)
                 await channel.send("{:,} received from {}. Your balance is now {:,}".format(amount, sender.name, new_balance))
 
     @commands.group(invoke_without_command=True, aliases=["lb"])
@@ -49,7 +49,7 @@ class GeneralCommands(commands.Cog):
         balances = []
 
         for user_id in user_list:
-            user = await self.bot.get_user_info(user_id[0])
+            user = await self.bot.fetch_user(user_id[0])
 
             if not user.bot:
                 balance = db.get_user_balance(user.id)
@@ -81,7 +81,7 @@ class GeneralCommands(commands.Cog):
         user_id_list = db.get_user() #Returns a list of all users
 
         for user_id in user_id_list:
-            user = await self.bot.get_user_info(user_id[0])
+            user = await self.bot.fetch_user(user_id[0])
             if not user.bot:
                 new_balance = db.modify_user_balance(user_id[0], amount)
                 await ctx.send('Added {} to {}\'s balance. New balance is {}'.format(amount, user.name, new_balance))

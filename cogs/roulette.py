@@ -59,7 +59,7 @@ class RouletteGame():
                 elif wager.space == str(winning_number):
                     payout += 36 * wager.amount
             new_balance = db.modify_user_balance(user_id, payout)
-            user = await self.bot.get_user_info(user_id)
+            user = await self.bot.fetch_user(user_id)
             await self.ctx.send("{} won {:,}, new balance is {:,}".format(user.name, payout, new_balance))
 
 class Roulette(commands.Cog):
