@@ -1,4 +1,5 @@
-FROM python:3.7-slim-buster
+FROM python:3.7.5-slim-buster
+RUN apt-get -y update && apt-get install -y libzbar-dev
 
 ARG LOTTO_BOT_TOKEN
 ENV LOTTO_BOT_TOKEN=$LOTTO_BOT_TOKEN

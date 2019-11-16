@@ -1,5 +1,7 @@
-\.idea/
 lightsail_compose.sh
+data/
+
+\.idea/
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
