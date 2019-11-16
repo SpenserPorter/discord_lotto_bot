@@ -2,20 +2,20 @@ version: "3.3"
 
 services:
     back_end:
-        build: .
+        image: sporter14/lottobot:latest
         ports:
             - "80:3000"
         environment:
             - LOTTO_BOT_TOKEN=$LOTTO_BOT_TOKEN
         volumes:
-            - db:/usr/src/app/lotto_bot/data
+            - /var/lotto_bot/db:/usr/src/app/data
     ouroboros:
         container_name: ouroboros
         hostname: ouroboros
         image: pyouroboros/ouroboros
         environment:
           - CLEANUP=true
-          - INTERVAL=300
+          - INTERVAL=30
           - LOG_LEVEL=info
           - SELF_UPDATE=true
           - IGNORE=mongo influxdb postgres mariadb
@@ -23,6 +23,3 @@ services:
         restart: unless-stopped
         volumes:
           - /var/run/docker.sock:/var/run/docker.sock
-
-volumes:
-    db: {}
