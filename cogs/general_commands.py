@@ -87,7 +87,7 @@ class GeneralCommands(commands.Cog):
             user = await self.bot.fetch_user(user_id[0])
             if not user.bot:
                 new_balance = db.modify_user_balance(user_id[0], amount)
-                await ctx.send('Added {:,} to {:,}\'s balance. New balance is {}'.format(amount, user.name, new_balance))
+                await ctx.send('Added {:,} to {}\'s balance. New balance is {:,}'.format(amount, user.name, new_balance))
 
     @commands.group(invoke_without_command=True, aliases=["bal","cash","money"])
     async def balance(self,ctx):
