@@ -6,9 +6,6 @@ import os
 import asyncio
 import uuid
 
-ACCESS_KEY = os.getenv('LOTTO_AWS_ACCESS_KEY')
-SECRET_KEY = os.getenv('LOTTO_AWS_SECREY_KEY')
-
 staging_table=sg.fromfile('staging_table.svg')
 coord_dict = {
     "1": (42, 332),
@@ -70,14 +67,12 @@ def get_coords(space, offset=(0,0), chip=False):
     return actual
 
 async def cleanup():
-    s3 = boto3.resource('s3', aws_access_key_id=ACCESS_KEY,
-                      aws_secret_access_key=SECRET_KEY)
+    s3 = boto3.resource('s3')
     bucket = s3.Bucket('lottobot')
     return bucket.objects.all().delete()
 
 async def upload_to_aws(local_file, bucket, s3_file):
-    s3 = boto3.client('s3', aws_access_key_id=ACCESS_KEY,
-                      aws_secret_access_key=SECRET_KEY)
+    s3 = boto3.client('s3')
 
     try:
         s3.upload_file(local_file, bucket, s3_file, ExtraArgs={'ACL':'public-read'})
