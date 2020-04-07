@@ -1,11 +1,30 @@
 import discord
 import random
 import lotto_dao as db
+import gfx
 import asyncio
 from discord.ext import commands
 
-outside_dict = {'red':([1,3,5,7,9,12,14,16,18,19,21,23,25,27,30,32,34,36],2),
-                'black':([2,4,6,8,10,11,13,15,17,20,22,24,26,28,29,31,33,35],2),
+def build_embed(embed_input_dict):
+
+    embed = discord.Embed(title=None,
+                      description=None,
+                      colour=embed_input_dict['colour']
+                      )
+
+    embed.set_author(name=embed_input_dict['author_name'])
+    image = embed_input_dict['s3_image_url']
+    embed.set_image(url='https://lottobot.s3.amazonaws.com/{}'.format(image))
+
+    try:
+        for key, field in embed_input_dict['fields'].items():
+            embed.add_field(name=field['name'], value=field['value'], inline=field['inline'] if 'inline' in field else False)
+    except:
+        print("Embed dict fucked up", embed_input_dict['fields'])
+    return embed
+
+outside_dict = {'red':([1,3,5,7,9,11,13,15,17,19,21,23,25,27,29,31,33,35],2),
+                'black':([2,4,6,8,10,12,14,16,18,20,22,24,26,28,30,32,34,36],2),
                 'even':(range(2,37,2),2),
                 'odd':(range(1,36,2),2),
                 '1-18':(range(1,19),2),
@@ -39,6 +58,7 @@ class RouletteGame():
         self.ctx = ctx
         self.bot = bot
         self.wager_dict = {}
+        self.roulette_message = None
 
     async def add_wagers(self, user_id, amount, spaces):
         for space in spaces:
@@ -46,11 +66,25 @@ class RouletteGame():
                 self.wager_dict[user_id] = [Wager(amount, space)]
             else:
                 self.wager_dict[user_id].append(Wager(amount, space))
+        table = gfx.Table()
+        table.add_wagers(self.wager_dict)
+        image_url = await table.render()
+        return image_url
 
     async def resolve(self):
         winning_number = spin()
         results = determine_outside(winning_number)
-        await self.ctx.send("Result is: {}{}".format(winning_number, ', '.join(results)))
+        table = gfx.Table()
+        table.add_wagers(self.wager_dict)
+        table.mark_winning_space(winning_number)
+        image_url = await table.render()
+        results_string = "Winning number: {}".format(winning_number)
+        embed_dict = {'colour':discord.Colour(0x006400), 'author_name':results_string,
+                      'fields': {},
+                      's3_image_url': image_url
+                      }
+        await self.roulette_message.edit(embed=build_embed(embed_dict))
+
         for user_id, wager_list in self.wager_dict.items():
             payout = 0
             for wager in wager_list:
@@ -60,7 +94,14 @@ class RouletteGame():
                     payout += 36 * wager.amount
             new_balance = db.modify_user_balance(user_id, payout)
             user = await self.bot.fetch_user(user_id)
-            await self.ctx.send("{} won {:,}, new balance is {:,}".format(user.name, payout, new_balance))
+            text1 = user.name
+            if payout > 0:
+                text2 = "won {:,}, new balance is {:,}".format(payout, new_balance)
+            else:
+                text2 = "Better luck next time!"
+            field_dict = {'name': text1, 'value': text2, 'inline': True}
+            embed_dict['fields'][user_id] = field_dict
+        await self.roulette_message.edit(embed=build_embed(embed_dict))
 
 class Roulette(commands.Cog):
 
@@ -72,7 +113,6 @@ class Roulette(commands.Cog):
     async def roulette(self, ctx, amount:int, *spaces):
         user_id = ctx.author.id
         balance = db.get_user_balance(user_id)
-
         #Validate user balance is sufficient and space is valid
         try:
             num_bets = len(spaces)
@@ -97,21 +137,39 @@ class Roulette(commands.Cog):
         #Initiate new game if no current game, add wager to current game otherwise.
         db.modify_user_balance(user_id, -1 * total_amount)
         if self.game is not None:
-            await self.game.add_wagers(user_id, amount, spaces)
-            output_brackets = ["{}"] * num_bets
-            output_string = "{} bet {:,} on {}".format(ctx.author, amount, ', '.join(output_brackets))
-            await ctx.send(output_string.format(*spaces))
+            image_url = await self.game.add_wagers(user_id, amount, spaces)
+            new_game_string = "A new game of Not Rigged Roulette started!"
+            embed_dict = {'colour':discord.Colour(0x006400), 'author_name':new_game_string,
+                          'fields': {},
+                          }
+            embed_dict['fields'][0] = {'name': 'Type $Roulette <wager> <space> to bet!', 'value': '------------'}
+            for user_id, wager_list in self.game.wager_dict.items():
+                user = await self.bot.fetch_user(user_id)
+                output_string = ""
+                embed_dict['fields'][user.id] = {'inline': True}
+                for wager in wager_list:
+                    output_string += "Bet {:,} on {} \n".format(wager.amount, wager.space)
+                embed_dict['fields'][user.id]['value'] = output_string
+                embed_dict['fields'][user.id]['name'] = user.name
+            embed_dict['s3_image_url'] = image_url
+            await self.game.roulette_message.edit(embed=build_embed(embed_dict))
         else:
             output_brackets = ["{}"] * num_bets
-            output_string = "{} bet {:,} on {}".format(ctx.author, amount, ', '.join(output_brackets))
-            await ctx.send(output_string.format(*spaces))
+            output_string = "Bet {:,} on {}".format(amount, ', '.join(output_brackets))
+            new_game_string = "Not Rigged Roulette started!"
+            embed_dict = {'colour':discord.Colour(0x006400), 'author_name':new_game_string,
+                          'fields': {},
+                          }
+            embed_dict['fields'][0] = {'name': 'Type $Roulette <wager> <space> to bet!', 'value': '------------'}
+            embed_dict['fields'][ctx.author.id] = {'name': ctx.author.name, 'value': output_string.format(*spaces), 'inline': True}
             self.game = RouletteGame(self.bot, ctx)
-            await self.game.add_wagers(user_id, amount, spaces)
-            await ctx.send("A new game of Not Rigged Roulette has started! User $roulette <amount> <space> to raise your bets!")
-            await ctx.send("31s remaining!")
+            image_url = await self.game.add_wagers(user_id, amount, spaces)
+            text2 = "31s remaining!"
+            embed_dict['fields']['0'] = {'name': 'Raise ur bets!', 'value': text2, 'inline': True}
+            embed_dict['s3_image_url'] = image_url
+            self.game.roulette_message = await ctx.send(embed=build_embed(embed_dict))
             async with ctx.typing():
                 await asyncio.sleep(21)
-                await ctx.send("10 seconds remaining, RAISE UR BETS!")
             async with ctx.typing():
                 await asyncio.sleep(10)
                 await self.game.resolve()
