@@ -6,8 +6,7 @@ WORKDIR usr/src/app
 COPY requirements.txt ./
 
 RUN pip install --upgrade pip
-RUN apk add --no-cache \
-    build-base cairo-dev cairo cairo-tools
+RUN apt-get -y install python3-cffi libcairo2 libffi-dev
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
