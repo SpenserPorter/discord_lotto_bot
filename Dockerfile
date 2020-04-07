@@ -7,7 +7,7 @@ COPY requirements.txt ./
 
 RUN pip install --upgrade pip
 RUN apk add --no-cache \
-    build-base cairo-dev cairo cairo-tools \
+    build-base cairo-dev cairo cairo-tools
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
