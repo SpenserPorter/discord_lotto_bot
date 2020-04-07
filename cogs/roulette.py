@@ -83,7 +83,6 @@ class RouletteGame():
                       'fields': {},
                       's3_image_url': image_url
                       }
-        await self.roulette_message.edit(embed=build_embed(embed_dict))
 
         for user_id, wager_list in self.wager_dict.items():
             payout = 0
@@ -174,8 +173,6 @@ class Roulette(commands.Cog):
                 await asyncio.sleep(10)
                 await self.game.resolve()
             self.game = None
-            await asyncio.sleep(5)
-            await gfx.cleanup()
 
 def setup(bot):
     bot.add_cog(Roulette(bot))
