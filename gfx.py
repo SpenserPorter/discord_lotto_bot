@@ -69,6 +69,12 @@ def get_coords(space, offset=(0,0), chip=False):
     actual=(base[0]+offset[0],base[1]+offset[1])
     return actual
 
+async def cleanup():
+    s3 = boto3.resource('s3', aws_access_key_id=ACCESS_KEY,
+                      aws_secret_access_key=SECRET_KEY)
+    bucket = s3.Bucket('lottobot')
+    return bucket.objects.all().delete()
+
 async def upload_to_aws(local_file, bucket, s3_file):
     s3 = boto3.client('s3', aws_access_key_id=ACCESS_KEY,
                       aws_secret_access_key=SECRET_KEY)
