@@ -6,7 +6,6 @@ import os
 import asyncio
 import uuid
 
-staging_table=sg.fromfile('staging_table.svg')
 coord_dict = {
     "1": (42, 332),
     "2": (42, 240),
