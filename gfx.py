@@ -121,6 +121,7 @@ class Table(object):
     def mark_winning_space(self, space):
         winner_coords=get_coords(space, offset=(-25,-15))
         self.marker.moveto(*winner_coords)
+        self.table.append(self.marker)
 
     async def render(self):
         image_id = uuid.uuid4()

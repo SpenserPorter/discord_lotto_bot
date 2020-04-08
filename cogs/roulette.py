@@ -23,8 +23,8 @@ def build_embed(embed_input_dict):
         print("Embed dict fucked up", embed_input_dict['fields'])
     return embed
 
-outside_dict = {'red':([1,3,5,7,9,11,13,15,17,19,21,23,25,27,29,31,33,35],2),
-                'black':([2,4,6,8,10,12,14,16,18,20,22,24,26,28,30,32,34,36],2),
+outside_dict = {'red':([1,3,5,7,9,12,14,16,18,19,21,23,25,27,30,32,34,36],2),
+                'black':([2,4,6,8,10,11,13,15,17,20,22,24,26,28,29,31,33,35],2),
                 'even':(range(2,37,2),2),
                 'odd':(range(1,36,2),2),
                 '1-18':(range(1,19),2),
